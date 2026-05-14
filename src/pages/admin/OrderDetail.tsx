@@ -82,6 +82,8 @@ export default function AdminOrderDetail() {
     .filter(Boolean)
     .join(', ');
 
+  const hasShippingAddr = !!order.shipping_first_name;
+
   return (
     <div className="p-6 max-w-2xl">
       <button onClick={() => navigate('/admin/ordenes')} className="flex items-center gap-1 text-sm text-gray-500 hover:text-gray-900 mb-6">
@@ -105,14 +107,27 @@ export default function AdminOrderDetail() {
           <Row label="Teléfono" value={order.customer_phone} />
         </Section>
 
-        {/* Dirección */}
+        {/* Dirección de facturación */}
         {fullAddress && (
-          <Section title="Dirección">
+          <Section title={hasShippingAddr ? 'Dirección de facturación' : 'Dirección'}>
+            <Row label="Nombre" value={order.customer_name} />
             <Row label="Dirección" value={order.address} />
             {order.address2 && <Row label="Piso / Dpto" value={order.address2} />}
             <Row label="Ciudad" value={order.city} />
             <Row label="Provincia" value={order.province} />
             <Row label="Cód. postal" value={order.postal_code} />
+          </Section>
+        )}
+
+        {/* Dirección de envío (otra persona) */}
+        {hasShippingAddr && (
+          <Section title="Enviar a otra persona">
+            <Row label="Nombre" value={`${order.shipping_first_name ?? ''} ${order.shipping_last_name ?? ''}`.trim()} />
+            <Row label="Dirección" value={order.shipping_address} />
+            {order.shipping_address2 && <Row label="Piso / Dpto" value={order.shipping_address2} />}
+            <Row label="Ciudad" value={order.shipping_city} />
+            <Row label="Provincia" value={order.shipping_province} />
+            <Row label="Cód. postal" value={order.shipping_postal_code} />
           </Section>
         )}
 

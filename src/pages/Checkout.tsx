@@ -177,10 +177,31 @@ export default function Checkout() {
         postal_code: billing.postal_code,
         payment_method: payment,
         shipping_method: shipping,
+        ...(diffShipping && shippingAddr.first_name && {
+          shipping_first_name:  shippingAddr.first_name,
+          shipping_last_name:   shippingAddr.last_name,
+          shipping_address:     shippingAddr.address,
+          shipping_address2:    shippingAddr.address2,
+          shipping_city:        shippingAddr.city,
+          shipping_province:    shippingAddr.province,
+          shipping_postal_code: shippingAddr.postal_code,
+        }),
       });
 
+      sessionStorage.setItem(`order_${data.order_id}`, JSON.stringify({
+        items: items.map((i) => ({ name: i.name, price: i.price, quantity: i.quantity, selected_options: i.selected_options })),
+        total: total(),
+        payment_method: payment,
+        shipping_method: shipping,
+      }));
+
       if (data.needs_mp) {
+        if (!data.init_point?.startsWith('https://www.mercadopago.com')) {
+          setError('URL de pago inválida. Contactá al administrador.');
+          return;
+        }
         window.location.href = data.init_point;
+        return;
       } else {
         clearCart();
         const state: CheckoutState = {

@@ -1,10 +1,58 @@
-import { useEffect } from 'react';
+import { useEffect, useMemo } from 'react';
 import { useParams, useSearchParams, useLocation, Link } from 'react-router-dom';
 import { CheckCircle, XCircle, Clock, Banknote, Users } from 'lucide-react';
 import { useCartStore } from '../store/cartStore';
 import { useSiteConfig } from '../hooks/useBanners';
 import api from '../lib/api';
-import type { CheckoutState } from '../types';
+import type { CheckoutState, OrderSummary } from '../types';
+
+const PAYMENT_LABELS: Record<string, string> = {
+  mercadopago: 'MercadoPago',
+  mercado_credito: 'Mercado Crédito',
+  transfer: 'Transferencia bancaria',
+  presencial: 'Pago en persona',
+};
+
+const SHIPPING_LABELS: Record<string, string> = {
+  retiro: 'Retiro en el local',
+  flete: 'Flete',
+};
+
+function formatPrice(n: number) {
+  return new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS', maximumFractionDigits: 0 }).format(n);
+}
+
+function OrderSummaryCard({ summary }: { summary: OrderSummary }) {
+  return (
+    <div className="bg-gray-50 border border-gray-200 rounded-xl p-5 text-left mb-6">
+      <h2 className="text-sm font-semibold text-gray-700 mb-3">Resumen del pedido</h2>
+      <ul className="space-y-2 mb-4">
+        {summary.items.map((item, i) => (
+          <li key={i} className="flex justify-between items-start gap-2 text-sm">
+            <span className="text-gray-700">
+              {item.name}
+              {item.selected_options && Object.keys(item.selected_options).length > 0 && (
+                <span className="text-gray-400 text-xs ml-1">
+                  ({Object.entries(item.selected_options).map(([k, v]) => `${k}: ${v}`).join(', ')})
+                </span>
+              )}
+              <span className="text-gray-400 ml-1">×{item.quantity}</span>
+            </span>
+            <span className="text-gray-900 font-medium whitespace-nowrap">{formatPrice(item.price * item.quantity)}</span>
+          </li>
+        ))}
+      </ul>
+      <div className="border-t border-gray-200 pt-3 flex justify-between text-sm font-semibold text-gray-900">
+        <span>Total</span>
+        <span>{formatPrice(summary.total)}</span>
+      </div>
+      <div className="mt-3 space-y-1 text-xs text-gray-500">
+        <p>Envío: {SHIPPING_LABELS[summary.shipping_method] ?? summary.shipping_method}</p>
+        <p>Pago: {PAYMENT_LABELS[summary.payment_method] ?? summary.payment_method}</p>
+      </div>
+    </div>
+  );
+}
 
 const WaIcon = () => (
   <svg viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5">
@@ -47,6 +95,12 @@ export default function OrderConfirmation() {
 
   const waNumber = config?.whatsapp?.replace(/\D/g, '');
 
+  const summary = useMemo<OrderSummary | null>(() => {
+    if (!id) return null;
+    const stored = sessionStorage.getItem(`order_${id}`);
+    return stored ? (JSON.parse(stored) as OrderSummary) : null;
+  }, [id]);
+
   // Pagos no-MP (transferencia o presencial)
   if (method === 'transfer' || method === 'presencial') {
     const isTransfer = method === 'transfer';
@@ -69,6 +123,7 @@ export default function OrderConfirmation() {
         <CheckCircle size={64} className="mx-auto mb-4 text-green-500" />
         <h1 className="text-2xl font-bold text-gray-900 mb-2">¡Pedido recibido!</h1>
         {id && <p className="text-xs text-gray-400 mb-5">Orden #{id}</p>}
+        {summary && <OrderSummaryCard summary={summary} />}
         <div className="bg-gray-50 border border-gray-200 rounded-xl p-5 text-left mb-6">
           <div className="flex items-center gap-3 mb-3">
             {isTransfer ? <Banknote size={20} className="text-gray-600" /> : <Users size={20} className="text-gray-600" />}
@@ -102,11 +157,8 @@ export default function OrderConfirmation() {
         <CheckCircle size={64} className="mx-auto mb-4 text-green-500" />
         <h1 className="text-2xl font-bold text-gray-900 mb-2">¡Pago aprobado!</h1>
         {id && <p className="text-xs text-gray-400 mb-5">Orden #{id}</p>}
-        <div className="bg-gray-50 border border-gray-200 rounded-xl p-5 text-left mb-6">
-          <p className="text-sm text-gray-600 leading-relaxed">
-            Tu pago fue procesado exitosamente. Contactanos por WhatsApp para coordinar la entrega de tu pedido.
-          </p>
-        </div>
+        {summary && <OrderSummaryCard summary={summary} />}
+        <p className="text-sm text-gray-500 mb-6">Tu pago fue procesado exitosamente. Contactanos por WhatsApp para coordinar la entrega.</p>
         <div className="space-y-3">
           {waLink && <WaButton href={waLink} label="Coordinar entrega por WhatsApp" />}
           <Link to="/" className="flex items-center justify-center w-full border border-gray-300 text-gray-700 px-6 py-3 rounded-xl font-semibold text-sm hover:bg-gray-50 transition-colors">
@@ -127,6 +179,7 @@ export default function OrderConfirmation() {
         <Clock size={64} className="mx-auto mb-4 text-blue-500" />
         <h1 className="text-2xl font-bold text-gray-900 mb-2">¡Pedido recibido!</h1>
         {id && <p className="text-xs text-gray-400 mb-5">Orden #{id}</p>}
+        {summary && <OrderSummaryCard summary={summary} />}
         <div className="bg-blue-50 border border-blue-200 rounded-xl p-5 text-left mb-6">
           <p className="text-sm text-gray-700 leading-relaxed">
             Tu pago con Mercado Crédito está siendo procesado. En cuanto se confirme, preparamos tu pedido. Podés contactarnos ahora para coordinar la entrega.

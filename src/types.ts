@@ -94,6 +94,13 @@ export type Order = {
   postal_code?: string;
   payment_method?: PaymentMethod;
   shipping_method?: ShippingMethod;
+  shipping_first_name?: string | null;
+  shipping_last_name?: string | null;
+  shipping_address?: string | null;
+  shipping_address2?: string | null;
+  shipping_city?: string | null;
+  shipping_province?: string | null;
+  shipping_postal_code?: string | null;
   created_at: string;
   order_items?: OrderItem[];
 };
@@ -123,6 +130,13 @@ export type PaginatedResponse<T> = {
   total: number;
   page?: number;
   limit?: number;
+};
+
+export type OrderSummary = {
+  items: Array<{ name: string; price: number; quantity: number; selected_options?: Record<string, string> }>;
+  total: number;
+  payment_method: PaymentMethod;
+  shipping_method: ShippingMethod;
 };
 
 export interface CheckoutState {
