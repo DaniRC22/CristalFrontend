@@ -42,8 +42,8 @@ export default function Envios() {
   return (
     <>
       <Helmet>
-        <title>Envíos — KAP Equipamiento Comercial</title>
-        <meta name="description" content="Información sobre envíos y entregas de KAP Equipamiento Comercial. Enviamos a todo el país." />
+        <title>Envíos — Cristal Equipamiento Comercial</title>
+        <meta name="description" content="Información sobre envíos y entregas de Cristal Equipamiento Comercial. Enviamos a todo el país." />
       </Helmet>
 
       {/* Hero */}

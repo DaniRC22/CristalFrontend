@@ -5,7 +5,7 @@ import { ShoppingCart, ChevronLeft } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useProduct } from '../hooks/useProducts';
 import { useCartStore } from '../store/cartStore';
-import StockBadge from '../components/product/StockBadge';
+import PreparationNotice from '../components/common/PreparationNotice';
 
 function formatPrice(price: number) {
   return new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS', maximumFractionDigits: 0 }).format(price);
@@ -55,7 +55,7 @@ export default function ProductDetail() {
 
   const sortedOptions = (product.product_options ?? []).slice().sort((a, b) => a.sort_order - b.sort_order);
   const allOptionsSelected = sortedOptions.every((opt) => !!selectedOptions[opt.name]);
-  const canAddToCart = product.stock > 0 && allOptionsSelected;
+  const canAddToCart = allOptionsSelected;
 
   const handleAddToCart = () => {
     if (!canAddToCart) return;
@@ -77,15 +77,15 @@ export default function ProductDetail() {
   return (
     <>
       <Helmet>
-        <title>{product.name} — KAP Equipamiento Comercial</title>
-        <meta name="description" content={product.description ?? `Comprá ${product.name} en KAP Equipamiento Comercial.`} />
+        <title>{product.name} — Cristal Equipamiento Comercial</title>
+        <meta name="description" content={product.description ?? `Comprá ${product.name} en Cristal Equipamiento Comercial.`} />
         <script type="application/ld+json">{JSON.stringify({
           '@context': 'https://schema.org',
           '@type': 'Product',
           name: product.name,
           description: product.description,
           image: images.map((i) => i.url),
-          offers: { '@type': 'Offer', price: product.price, priceCurrency: 'ARS', availability: product.stock > 0 ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock' },
+          offers: { '@type': 'Offer', price: product.price, priceCurrency: 'ARS', availability: 'https://schema.org/InStock' },
         })}</script>
       </Helmet>
 
@@ -222,11 +222,6 @@ export default function ProductDetail() {
             {/* Separador dorado */}
             <div className="w-12 h-px mb-6" style={{ backgroundColor: '#d4a843' }} />
 
-            {/* Stock */}
-            <div className="mb-6">
-              <StockBadge stock={product.stock} threshold={product.low_stock_threshold} />
-            </div>
-
             {/* Descripción */}
             {product.description && (
               <p className="text-gray-500 text-sm leading-relaxed mb-6">{product.description}</p>
@@ -278,19 +273,20 @@ export default function ProductDetail() {
             {/* Botón carrito */}
             <button
               onClick={handleAddToCart}
-              disabled={product.stock === 0 || (sortedOptions.length > 0 && !allOptionsSelected)}
+              disabled={sortedOptions.length > 0 && !allOptionsSelected}
               className="mt-auto flex items-center justify-center gap-2.5 text-white py-4 px-8 text-xs tracking-widest uppercase font-semibold rounded-xl disabled:opacity-40 disabled:cursor-not-allowed transition-all duration-300 hover:opacity-90"
               style={{ backgroundColor: added ? '#d4a843' : '#1a1a1a' }}
             >
               <ShoppingCart size={16} />
-              {product.stock === 0
-                ? 'Sin stock'
-                : added
+              {added
                 ? '¡Agregado al carrito!'
                 : sortedOptions.length > 0 && !allOptionsSelected
                 ? `Elegí ${missingOptions.map((o) => o.name).join(', ')}`
                 : 'Agregar al carrito'}
             </button>
+
+            <PreparationNotice className="mt-4" />
+
           </motion.div>
 
         </div>

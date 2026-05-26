@@ -31,10 +31,9 @@ export const useCartStore = create<CartState>()(
           const cart_key = makeCartKey(item.id, item.selected_options);
           const existing = state.items.find((i) => i.cart_key === cart_key);
           if (existing) {
-            const newQty = Math.min(existing.quantity + 1, item.stock);
             return {
               items: state.items.map((i) =>
-                i.cart_key === cart_key ? { ...i, quantity: newQty } : i
+                i.cart_key === cart_key ? { ...i, quantity: i.quantity + 1 } : i
               ),
             };
           }

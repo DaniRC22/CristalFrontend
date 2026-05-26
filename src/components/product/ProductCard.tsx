@@ -42,7 +42,6 @@ export default function ProductCard({ product }: Props) {
 
   const handleAddToCart = (e: React.MouseEvent) => {
     e.preventDefault();
-    if (product.stock === 0) return;
     addItem(product);
   };
 
@@ -61,7 +60,7 @@ export default function ProductCard({ product }: Props) {
             alt={product.name}
             loading="lazy"
             variants={imgHover}
-            className="absolute inset-0 w-full h-full object-cover"
+            className="absolute inset-0 w-full h-full object-cover object-top"
           />
         ) : (
           <div className="absolute inset-0 bg-gradient-to-br from-gray-200 to-gray-300 flex items-center justify-center">
@@ -76,15 +75,6 @@ export default function ProductCard({ product }: Props) {
             style={{ backgroundColor: '#d4a843', color: '#fff' }}
           >
             -{product.transfer_discount_pct}%
-          </div>
-        )}
-
-        {/* Sin stock */}
-        {product.stock === 0 && (
-          <div className="absolute inset-0 bg-black/50 flex items-center justify-center z-20">
-            <span className="text-xs font-semibold tracking-widest uppercase text-white border border-white/50 px-3 py-1">
-              Sin stock
-            </span>
           </div>
         )}
 
@@ -126,13 +116,11 @@ export default function ProductCard({ product }: Props) {
 
           <motion.div
             variants={footerHover}
-            className="flex items-center justify-between mt-2"
+            className="flex items-center justify-end mt-2"
           >
-            <StockDot stock={product.stock} />
             <button
               onClick={handleAddToCart}
-              disabled={product.stock === 0}
-              className="p-1.5 rounded-lg text-white disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+              className="p-1.5 rounded-lg text-white transition-colors"
               style={{ backgroundColor: 'rgba(255,255,255,0.15)' }}
               aria-label="Agregar al carrito"
             >
@@ -145,16 +133,3 @@ export default function ProductCard({ product }: Props) {
   );
 }
 
-function StockDot({ stock, threshold = 5 }: { stock: number; threshold?: number }) {
-  if (stock === 0) return null;
-  const isLow = stock <= threshold;
-  return (
-    <span className="flex items-center gap-1.5 text-xs text-white/60">
-      <span
-        className="w-1.5 h-1.5 rounded-full"
-        style={{ backgroundColor: isLow ? '#f59e0b' : '#22c55e' }}
-      />
-      {isLow ? `Últimas ${stock}` : 'En stock'}
-    </span>
-  );
-}

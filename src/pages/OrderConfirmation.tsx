@@ -4,6 +4,7 @@ import { CheckCircle, XCircle, Clock, Banknote, Users } from 'lucide-react';
 import { useCartStore } from '../store/cartStore';
 import { useSiteConfig } from '../hooks/useBanners';
 import api from '../lib/api';
+import PreparationNotice from '../components/common/PreparationNotice';
 import type { CheckoutState, OrderSummary } from '../types';
 
 const PAYMENT_LABELS: Record<string, string> = {
@@ -86,12 +87,15 @@ export default function OrderConfirmation() {
     if (status || method) clearCart();
   }, [status, method, clearCart]);
 
-  // Cancelar orden en caso de fallo
+  // Cancelar orden en caso de fallo (el endpoint público valida que esté pending
+  // y sin pago MP; si tiene pago, el admin verifica manualmente). El token `t`
+  // viaja en la failure URL y autoriza cancelar esta orden puntual.
   useEffect(() => {
-    if (status === 'failure' && id) {
-      api.patch(`/api/admin/orders/${id}/status`, { status: 'cancelled' }).catch(() => {});
+    const t = searchParams.get('t');
+    if (status === 'failure' && id && t) {
+      api.post(`/api/checkout/${id}/cancel?t=${encodeURIComponent(t)}`).catch(() => {});
     }
-  }, [status, id]);
+  }, [status, id, searchParams]);
 
   const waNumber = config?.whatsapp?.replace(/\D/g, '');
 
@@ -137,6 +141,7 @@ export default function OrderConfirmation() {
               : 'Pasá por el local para abonar y retirar tu pedido. Te contactaremos para coordinar el horario.'}
           </p>
         </div>
+        <PreparationNotice variant="card" className="mb-6 text-left" />
         <div className="space-y-3">
           {waLink && <WaButton href={waLink} label="Coordinar por WhatsApp" />}
           <Link to="/" className="flex items-center justify-center w-full border border-gray-300 text-gray-700 px-6 py-3 rounded-xl font-semibold text-sm hover:bg-gray-50 transition-colors">
@@ -159,6 +164,7 @@ export default function OrderConfirmation() {
         {id && <p className="text-xs text-gray-400 mb-5">Orden #{id}</p>}
         {summary && <OrderSummaryCard summary={summary} />}
         <p className="text-sm text-gray-500 mb-6">Tu pago fue procesado exitosamente. Contactanos por WhatsApp para coordinar la entrega.</p>
+        <PreparationNotice variant="card" className="mb-6 text-left" />
         <div className="space-y-3">
           {waLink && <WaButton href={waLink} label="Coordinar entrega por WhatsApp" />}
           <Link to="/" className="flex items-center justify-center w-full border border-gray-300 text-gray-700 px-6 py-3 rounded-xl font-semibold text-sm hover:bg-gray-50 transition-colors">
@@ -185,6 +191,7 @@ export default function OrderConfirmation() {
             Tu pago con Mercado Crédito está siendo procesado. En cuanto se confirme, preparamos tu pedido. Podés contactarnos ahora para coordinar la entrega.
           </p>
         </div>
+        <PreparationNotice variant="card" className="mb-6 text-left" />
         <div className="space-y-3">
           {waLink && <WaButton href={waLink} label="Coordinar entrega por WhatsApp" />}
           <Link to="/" className="flex items-center justify-center w-full border border-gray-300 text-gray-700 px-6 py-3 rounded-xl font-semibold text-sm hover:bg-gray-50 transition-colors">

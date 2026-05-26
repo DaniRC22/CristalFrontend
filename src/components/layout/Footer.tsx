@@ -56,7 +56,7 @@ export default function Footer() {
           {/* Logo — centro */}
           <div className="flex flex-col items-center text-center shrink-0 mx-auto md:mx-0">
             <Link to="/">
-              <img src={logo} alt="KAP Logo" className="h-60 w-60 rounded-full object-cover mb-6 ring-1 ring-white/10" />
+              <img src={logo} alt="Cristal Logo" className="h-60 w-60 rounded-full object-cover mb-6 ring-1 ring-white/10" />
             </Link>
             <h2 className="text-white text-2xl font-light tracking-wide" style={{ fontFamily: "'Cormorant Garamond', serif" }}>
               Cristal Equipamiento Comercial

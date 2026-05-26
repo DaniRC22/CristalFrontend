@@ -17,14 +17,10 @@ export default function AdminLogin() {
     setError('');
     setLoading(true);
     try {
-      
       const { data } = await api.post('/api/auth/login', { email, password });
-     
       setAuth(data.access_token, data.user.email);
-     
       navigate('/admin');
-    } catch (error) {
-      console.error( error);
+    } catch {
       setError('Credenciales inválidas');
     } finally {
       setLoading(false);
@@ -34,7 +30,7 @@ export default function AdminLogin() {
   return (
     <div className="min-h-screen bg-gray-100 flex items-center justify-center p-4">
       <div className="bg-white rounded-2xl shadow-md w-full max-w-sm p-8">
-        <h1 className="text-2xl font-bold text-gray-900 mb-1">KAP Admin</h1>
+        <h1 className="text-2xl font-bold text-gray-900 mb-1">Cristal Admin</h1>
         <p className="text-sm text-gray-500 mb-6">Ingresá con tu cuenta de administrador</p>
 
         <form onSubmit={handleSubmit} className="space-y-4">

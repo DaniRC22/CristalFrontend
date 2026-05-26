@@ -36,8 +36,8 @@ export default function Categories() {
   return (
     <>
       <Helmet>
-        <title>Categorías — KAP Equipamiento Comercial</title>
-        <meta name="description" content="Explorá todas las categorías de KAP: maniquíes, percheros, mostradores, accesorios y más." />
+        <title>Categorías — Cristal Equipamiento Comercial</title>
+        <meta name="description" content="Explorá todas las categorías de Cristal: maniquíes, percheros, mostradores, accesorios y más." />
       </Helmet>
 
       <section className="max-w-7xl mx-auto px-4 py-16">

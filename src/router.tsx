@@ -1,5 +1,6 @@
 import { lazy, Suspense } from 'react';
-import { createBrowserRouter, RouterProvider, Outlet } from 'react-router-dom';
+import { createBrowserRouter, RouterProvider, Outlet, useLocation } from 'react-router-dom';
+import { Helmet } from 'react-helmet-async';
 import Header from './components/layout/Header';
 import Footer from './components/layout/Footer';
 import WhatsAppButton from './components/layout/WhatsAppButton';
@@ -32,8 +33,12 @@ const AdminOrderDetail = lazy(() => import('./pages/admin/OrderDetail'));
 const AdminConfig = lazy(() => import('./pages/admin/SiteConfig'));
 
 function PublicLayout() {
+  const { pathname } = useLocation();
   return (
     <>
+      <Helmet>
+        <link rel="canonical" href={`https://cristalequipamientos.com${pathname}`} />
+      </Helmet>
       <Header />
       <main className="flex-1">
         <Outlet />

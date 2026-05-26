@@ -8,9 +8,9 @@ import type { SiteConfig } from '../../types';
 const fields = [
   { key: 'whatsapp', label: 'WhatsApp (número con código de país)', placeholder: '5491112345678' },
   { key: 'phone', label: 'Teléfono', placeholder: '011 1234-5678' },
-  { key: 'email', label: 'Email de contacto', placeholder: 'info@kap.com.ar' },
-  { key: 'instagram', label: 'Instagram (URL completa)', placeholder: 'https://instagram.com/kap' },
-  { key: 'facebook', label: 'Facebook (URL completa)', placeholder: 'https://facebook.com/kap' },
+  { key: 'email', label: 'Email de contacto', placeholder: 'info@cristalequipamientos.com' },
+  { key: 'instagram', label: 'Instagram (URL completa)', placeholder: 'https://instagram.com/cristalequipamientos' },
+  { key: 'facebook', label: 'Facebook (URL completa)', placeholder: 'https://facebook.com/cristalequipamientos' },
 ];
 
 export default function AdminSiteConfig() {

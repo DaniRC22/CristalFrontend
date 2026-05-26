@@ -17,8 +17,8 @@ export default function Catalog() {
   return (
     <>
       <Helmet>
-        <title>Productos — KAP Equipamiento Comercial</title>
-        <meta name="description" content="Catálogo de productos KAP: maniquíes, percheros, mostradores y más." />
+        <title>Productos — Cristal Equipamiento Comercial</title>
+        <meta name="description" content="Catálogo de productos Cristal: maniquíes, percheros, mostradores y más." />
       </Helmet>
 
       <div className="max-w-7xl mx-auto px-4 py-8">

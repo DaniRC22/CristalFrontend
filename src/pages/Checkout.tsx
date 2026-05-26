@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { MapPin, Truck, CreditCard, ArrowRight, Banknote, Users, Smartphone } from 'lucide-react';
 import { useCartStore } from '../store/cartStore';
 import api from '../lib/api';
+import PreparationNotice from '../components/common/PreparationNotice';
 import type { PaymentMethod, ShippingMethod, CheckoutState } from '../types';
 
 function formatPrice(price: number) {
@@ -225,7 +226,7 @@ export default function Checkout() {
 
   return (
     <>
-      <Helmet><title>Checkout — KAP Equipamiento Comercial</title></Helmet>
+      <Helmet><title>Checkout — Cristal Equipamiento Comercial</title></Helmet>
 
       <div className="max-w-6xl mx-auto px-4 py-10">
         <h1 className="text-2xl font-bold text-gray-900 mb-8">Finalizar pedido</h1>
@@ -356,6 +357,8 @@ export default function Checkout() {
                     <p className="text-xs text-red-700">{error}</p>
                   </div>
                 )}
+
+                <PreparationNotice variant="card" className="mt-5" />
 
                 <p className="text-xs text-gray-400 mt-5 leading-relaxed">
                   Tus datos personales se utilizarán para procesar tu pedido y mejorar tu experiencia en el sitio.

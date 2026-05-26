@@ -25,7 +25,7 @@ export default function Nosotros() {
   return (
     <>
       <Helmet>
-        <title>Nosotros — KAP Equipamiento Comercial</title>
+        <title>Nosotros — Cristal Equipamiento Comercial</title>
         <meta
           name="description"
           content="Somos una empresa familiar con 25 años de experiencia en equipamiento comercial. Conocé nuestra historia y compromiso con la calidad."

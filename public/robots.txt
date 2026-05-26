@@ -1,0 +1,8 @@
+User-agent: *
+Allow: /
+Disallow: /admin
+Disallow: /checkout
+Disallow: /carrito
+Disallow: /orden/
+
+Sitemap: https://cristalequipamientos.com/sitemap.xml

@@ -34,7 +34,7 @@ export default function Home() {
   return (
     <>
       <Helmet>
-        <title>KAP Equipamiento Comercial — Maniquíes, Percheros y más</title>
+        <title>Cristal Equipamiento Comercial — Maniquíes, Percheros y más</title>
         <meta name="description" content="Equipamiento profesional para comercios. Maniquíes, percheros, mostradores, accesorios y más. Envíos a todo el país." />
       </Helmet>
 

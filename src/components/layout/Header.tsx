@@ -21,7 +21,7 @@ export default function Header() {
     <header className="sticky top-0 z-50 bg-white border-b border-gray-200 shadow-sm">
       <div className="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
         <Link to="/" className="flex items-center">
-          <img src={logo} alt="KAP Logo" className="h-14 w-14 rounded-full object-cover" />
+          <img src={logo} alt="Cristal Logo" className="h-14 w-14 rounded-full object-cover" />
         </Link>
 
         {/* Desktop nav */}

@@ -29,7 +29,7 @@ export default function AdminLayout() {
       {/* Sidebar */}
       <aside className="w-60 bg-gray-900 text-white flex flex-col shrink-0">
         <div className="px-5 py-4 border-b border-gray-700">
-          <p className="font-bold text-lg">KAP Admin</p>
+          <p className="font-bold text-lg">Cristal Admin</p>
           <p className="text-xs text-gray-400 truncate">{email}</p>
         </div>
 

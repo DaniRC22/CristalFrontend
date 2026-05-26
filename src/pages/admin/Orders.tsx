@@ -85,7 +85,7 @@ export default function AdminOrders() {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
-              {data?.data.map((order) => {
+              {(data?.data ?? []).map((order) => {
                 const s = statusConfig[order.status] ?? statusConfig.pending;
                 return (
                   <tr key={order.id}>
@@ -111,7 +111,7 @@ export default function AdminOrders() {
                   </tr>
                 );
               })}
-              {!data?.data.length && <tr><td colSpan={7} className="px-4 py-8 text-center text-gray-400">Sin órdenes</td></tr>}
+              {!data?.data?.length && <tr><td colSpan={7} className="px-4 py-8 text-center text-gray-400">Sin órdenes</td></tr>}
             </tbody>
           </table>
         </div>

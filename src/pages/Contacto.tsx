@@ -27,8 +27,8 @@ export default function Contacto() {
   return (
     <>
       <Helmet>
-        <title>Contacto — KAP Equipamiento Comercial</title>
-        <meta name="description" content="Contactá a KAP Equipamiento Comercial por WhatsApp, email o redes sociales." />
+        <title>Contacto — Cristal Equipamiento Comercial</title>
+        <meta name="description" content="Contactá a Cristal Equipamiento Comercial por WhatsApp, email o redes sociales." />
       </Helmet>
       <div className="max-w-2xl mx-auto px-4 py-12">
         <h1 className="text-3xl font-bold text-gray-900 mb-8">Contacto</h1>
