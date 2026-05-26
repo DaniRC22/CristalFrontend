@@ -1,9 +1,21 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { ArrowLeft, Upload, Trash2, Star, Plus, X } from 'lucide-react';
+import { ArrowLeft, Upload, Trash2, Star, Plus, X, AlertCircle } from 'lucide-react';
+import { AxiosError } from 'axios';
 import api from '../../lib/api';
 import type { Category, Product, ProductImage, ProductOption } from '../../types';
+
+function normalizeName(n: string): string {
+  return n.trim().toLowerCase().normalize('NFD').replace(/\p{Diacritic}/gu, '');
+}
+
+function extractServerError(err: unknown): string | null {
+  if (err instanceof AxiosError) {
+    return err.response?.data?.error ?? err.message ?? null;
+  }
+  return null;
+}
 
 export default function AdminProductForm() {
   const { id } = useParams();
@@ -22,6 +34,7 @@ export default function AdminProductForm() {
   const [options, setOptions] = useState<ProductOption[]>([]);
   const [newOptName, setNewOptName] = useState('');
   const [newOptValues, setNewOptValues] = useState('');
+  const [nameTouched, setNameTouched] = useState(false);
 
   const { data: categories = [] } = useQuery<Category[]>({
     queryKey: ['admin-categories'],
@@ -33,6 +46,28 @@ export default function AdminProductForm() {
     queryFn: () => api.get(`/api/admin/products/${id}`).then((r) => r.data),
     enabled: isEdit,
   });
+
+  // Debounce del nombre para no consultar al backend en cada tecla.
+  // 400ms es suficiente para que el usuario termine de tipear sin sentir lag.
+  const [debouncedName, setDebouncedName] = useState('');
+  useEffect(() => {
+    const trimmed = form.name.trim();
+    const t = setTimeout(() => setDebouncedName(trimmed), trimmed ? 400 : 0);
+    return () => clearTimeout(t);
+  }, [form.name]);
+
+  // Chequeo proactivo de duplicado contra el backend (case-insensitive, sin
+  // acentos). Excluye el propio producto cuando estamos editando.
+  const { data: nameMatches } = useQuery<{ data: Product[] }>({
+    queryKey: ['admin-products', 'name-check', debouncedName],
+    queryFn: () => api.get('/api/admin/products', { params: { search: debouncedName, limit: 20 } }).then((r) => r.data),
+    enabled: !!debouncedName,
+  });
+
+  const normalizedInput = normalizeName(form.name);
+  const isDuplicate = !!nameMatches?.data?.some(
+    (p) => normalizeName(p.name) === normalizedInput && String(p.id) !== String(id ?? ''),
+  );
 
   useEffect(() => {
     if (product) {
@@ -60,6 +95,8 @@ export default function AdminProductForm() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    setNameTouched(true);
+    if (isDuplicate) return;
     saveMutation.mutate({
       ...form,
       price: parseFloat(form.price),
@@ -145,7 +182,19 @@ export default function AdminProductForm() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="md:col-span-2">
             <label className="block text-sm font-medium text-gray-700 mb-1">Nombre *</label>
-            <input value={form.name} onChange={(e) => setForm(p => ({ ...p, name: e.target.value }))} required className={inputClass} />
+            <input
+              value={form.name}
+              onChange={(e) => setForm(p => ({ ...p, name: e.target.value }))}
+              onBlur={() => setNameTouched(true)}
+              required
+              aria-invalid={isDuplicate || undefined}
+              className={`${inputClass} ${isDuplicate && nameTouched ? 'border-red-400 focus:ring-red-500' : ''}`}
+            />
+            {isDuplicate && nameTouched && (
+              <p className="mt-1 flex items-center gap-1 text-xs text-red-600">
+                <AlertCircle size={13} /> Ya existe un producto con ese nombre
+              </p>
+            )}
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Categoría</label>
@@ -186,9 +235,18 @@ export default function AdminProductForm() {
           </div>
         </div>
 
-        {saveMutation.isError && <p className="text-sm text-red-600">Error al guardar. Revisá los datos.</p>}
+        {saveMutation.isError && (
+          <p className="flex items-center gap-1.5 text-sm text-red-600">
+            <AlertCircle size={15} />
+            {extractServerError(saveMutation.error) ?? 'Error al guardar. Revisá los datos.'}
+          </p>
+        )}
 
-        <button type="submit" disabled={saveMutation.isPending} className="bg-blue-600 text-white px-6 py-2.5 rounded-lg font-semibold text-sm hover:bg-blue-700 disabled:opacity-60">
+        <button
+          type="submit"
+          disabled={saveMutation.isPending || isDuplicate}
+          className="bg-blue-600 text-white px-6 py-2.5 rounded-lg font-semibold text-sm hover:bg-blue-700 disabled:opacity-60"
+        >
           {saveMutation.isPending ? 'Guardando...' : isEdit ? 'Actualizar' : 'Crear producto'}
         </button>
       </form>
