@@ -9,7 +9,6 @@ import type { CheckoutState, OrderSummary } from '../types';
 
 const PAYMENT_LABELS: Record<string, string> = {
   mercadopago: 'MercadoPago',
-  mercado_credito: 'Mercado Crédito',
   transfer: 'Transferencia bancaria',
   presencial: 'Pago en persona',
 };

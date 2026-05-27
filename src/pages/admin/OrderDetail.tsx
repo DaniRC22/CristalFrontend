@@ -9,7 +9,6 @@ const paymentLabels: Record<string, string> = {
   transfer: 'Transferencia bancaria',
   presencial: 'Pago en persona',
   mercadopago: 'Medio de pago a elección (MP)',
-  mercado_credito: 'Mercado Crédito',
 };
 
 const shippingLabels: Record<string, string> = {
@@ -172,7 +171,7 @@ export default function AdminOrderDetail() {
                 {s.label}
               </button>
             ))}
-            {order.status === 'pending' && ['mercadopago', 'mercado_credito'].includes(order.payment_method ?? '') && (
+            {order.status === 'pending' && order.payment_method === 'mercadopago' && (
               <button
                 onClick={() => { setVerifyMsg(null); verifyMutation.mutate(); }}
                 disabled={verifyMutation.isPending}

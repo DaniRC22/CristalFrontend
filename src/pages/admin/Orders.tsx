@@ -13,7 +13,6 @@ const statusConfig = {
 
 const paymentConfig: Record<string, string> = {
   mercadopago: 'MercadoPago',
-  mercado_credito: 'Mercado Crédito',
   transfer: 'Transferencia',
   presencial: 'Efectivo',
 };
@@ -26,7 +25,7 @@ export default function AdminOrders() {
   const [page, setPage] = useState(1);
   const queryClient = useQueryClient();
 
-  const { data, isLoading, refetch } = useQuery<{ data: Order[]; total: number }>({
+  const { data, isLoading, error, refetch } = useQuery<{ data: Order[]; total: number }>({
     queryKey: ['admin-orders', status, date, page],
     queryFn: () =>
       api.get('/api/admin/orders', {
@@ -70,6 +69,7 @@ export default function AdminOrders() {
         </div>
       </div>
 
+      {error && <p className="text-sm text-red-500 mb-4">Error al cargar órdenes: {(error as Error).message}</p>}
       {isLoading ? <p className="text-sm text-gray-400">Cargando...</p> : (
         <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
           <table className="w-full text-sm">

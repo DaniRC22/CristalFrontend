@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { useNavigate } from 'react-router-dom';
-import { MapPin, Truck, CreditCard, ArrowRight, Banknote, Users, Smartphone } from 'lucide-react';
+import { MapPin, Truck, CreditCard, ArrowRight, Banknote, Users } from 'lucide-react';
 import { useCartStore } from '../store/cartStore';
 import api from '../lib/api';
 import PreparationNotice from '../components/common/PreparationNotice';
@@ -28,7 +28,6 @@ const paymentOptions: { value: PaymentMethod; label: string; desc: string; icon:
   { value: 'transfer', label: 'Transferencia bancaria', desc: 'Te enviamos los datos al confirmar', icon: Banknote },
   { value: 'presencial', label: 'Pago en persona', desc: 'Efectivo o cualquier medio al retirar', icon: Users },
   { value: 'mercadopago', label: 'Medio de pago a elección', desc: 'Tarjeta, débito, billetera virtual y más', icon: CreditCard },
-  { value: 'mercado_credito', label: 'Mercado Crédito', desc: 'Pagá en cuotas sin tarjeta', icon: Smartphone },
 ];
 
 const inputCls = 'w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-gray-900 transition-shadow';
