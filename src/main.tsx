@@ -6,6 +6,7 @@ import { initMercadoPago } from '@mercadopago/sdk-react';
 import './index.css';
 import AppRouter from './router';
 
+console.log('[MP] Public key en uso:', import.meta.env.VITE_MP_PUBLIC_KEY?.slice(0, 30) + '...');
 initMercadoPago(import.meta.env.VITE_MP_PUBLIC_KEY, { locale: 'es-AR' });
 
 const queryClient = new QueryClient({
