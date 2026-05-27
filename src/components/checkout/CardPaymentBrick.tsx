@@ -10,7 +10,6 @@ interface CardPaymentBrickProps {
   orderId: number;
   total: number;
   email: string;
-  publicKey: string;
   onResult: (status: string, redirectUrls: { approved: string; rejected: string; pending: string }) => void;
   onError: (message: string) => void;
 }
@@ -19,7 +18,6 @@ export default function CardPaymentBrick({
   orderId,
   total,
   email,
-  publicKey,
   onResult,
   onError,
 }: CardPaymentBrickProps) {
@@ -27,10 +25,10 @@ export default function CardPaymentBrick({
 
   useEffect(() => {
     if (!initialized.current) {
-      initMercadoPago(publicKey, { locale: 'es-AR' });
+      initMercadoPago(import.meta.env.VITE_MP_PUBLIC_KEY, { locale: 'es-AR' });
       initialized.current = true;
     }
-  }, [publicKey]);
+  }, []);
 
   const handleSubmit = async (formData: CardPaymentSubmitData) => {
     try {
