@@ -2,6 +2,8 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import type { CartItem } from '../types';
 
+const CART_TTL_MS = 24 * 60 * 60 * 1000; // 24h desde la última modificación
+
 function makeCartKey(productId: number, options?: Record<string, string>): string {
   if (!options || Object.keys(options).length === 0) return String(productId);
   const sorted = Object.keys(options).sort().reduce(
@@ -13,6 +15,7 @@ function makeCartKey(productId: number, options?: Record<string, string>): strin
 
 interface CartState {
   items: CartItem[];
+  expiresAt: number | null;
   addItem: (item: Omit<CartItem, 'quantity' | 'cart_key'>) => void;
   removeItem: (cartKey: string) => void;
   updateQuantity: (cartKey: string, quantity: number) => void;
@@ -21,10 +24,13 @@ interface CartState {
   itemCount: () => number;
 }
 
+const nextExpiry = () => Date.now() + CART_TTL_MS;
+
 export const useCartStore = create<CartState>()(
   persist(
     (set, get) => ({
       items: [],
+      expiresAt: null,
 
       addItem: (item) =>
         set((state) => {
@@ -35,27 +41,47 @@ export const useCartStore = create<CartState>()(
               items: state.items.map((i) =>
                 i.cart_key === cart_key ? { ...i, quantity: i.quantity + 1 } : i
               ),
+              expiresAt: nextExpiry(),
             };
           }
-          return { items: [...state.items, { ...item, cart_key, quantity: 1 }] };
+          return {
+            items: [...state.items, { ...item, cart_key, quantity: 1 }],
+            expiresAt: nextExpiry(),
+          };
         }),
 
       removeItem: (cartKey) =>
-        set((state) => ({ items: state.items.filter((i) => i.cart_key !== cartKey) })),
+        set((state) => {
+          const items = state.items.filter((i) => i.cart_key !== cartKey);
+          return { items, expiresAt: items.length ? nextExpiry() : null };
+        }),
 
       updateQuantity: (cartKey, quantity) =>
-        set((state) => ({
-          items: quantity <= 0
+        set((state) => {
+          const items = quantity <= 0
             ? state.items.filter((i) => i.cart_key !== cartKey)
-            : state.items.map((i) => (i.cart_key === cartKey ? { ...i, quantity } : i)),
-        })),
+            : state.items.map((i) => (i.cart_key === cartKey ? { ...i, quantity } : i));
+          return { items, expiresAt: items.length ? nextExpiry() : null };
+        }),
 
-      clearCart: () => set({ items: [] }),
+      clearCart: () => set({ items: [], expiresAt: null }),
 
       total: () => get().items.reduce((sum, i) => sum + i.price * i.quantity, 0),
 
       itemCount: () => get().items.reduce((sum, i) => sum + i.quantity, 0),
     }),
-    { name: 'kap-cart' }
+    {
+      name: 'kap-cart',
+      // El carrito expira 24h después de la última modificación. Sin esto,
+      // queda en localStorage indefinidamente y el cliente puede encontrar
+      // ítems viejos (con precios/stock desactualizados) semanas después.
+      onRehydrateStorage: () => (state) => {
+        if (!state) return;
+        if (typeof state.expiresAt === 'number' && state.expiresAt < Date.now()) {
+          state.items = [];
+          state.expiresAt = null;
+        }
+      },
+    }
   )
 );
