@@ -1,5 +1,4 @@
-import { useEffect, useRef } from 'react';
-import { CardPayment, initMercadoPago } from '@mercadopago/sdk-react';
+import { CardPayment } from '@mercadopago/sdk-react';
 import api from '../../lib/api';
 
 // Inferimos el tipo del parámetro onSubmit directamente del componente,
@@ -27,15 +26,6 @@ export default function CardPaymentBrick({
   onResult,
   onError,
 }: CardPaymentBrickProps) {
-  const initialized = useRef(false);
-
-  useEffect(() => {
-    if (!initialized.current) {
-      initMercadoPago(import.meta.env.VITE_MP_PUBLIC_KEY, { locale: 'es-AR' });
-      initialized.current = true;
-    }
-  }, []);
-
   const handleSubmit = async (formData: CardPaymentSubmitData) => {
     try {
       const ident = (formData.payer as { identification?: { type?: string; number?: string } }).identification;
