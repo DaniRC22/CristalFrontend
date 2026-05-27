@@ -1,4 +1,4 @@
-export type PaymentMethod = 'transfer' | 'presencial' | 'mercadopago';
+export type PaymentMethod = 'transfer' | 'presencial' | 'mercadopago' | 'tarjeta';
 export type ShippingMethod = 'retiro' | 'flete';
 export type OrderStatus = 'pending' | 'approved' | 'cancelled';
 

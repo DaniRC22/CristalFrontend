@@ -8,7 +8,7 @@ import type { Order } from '../../types';
 const paymentLabels: Record<string, string> = {
   transfer: 'Transferencia bancaria',
   presencial: 'Pago en persona',
-  mercadopago: 'Medio de pago a elección (MP)',
+  mercadopago: 'Mercado Pago (MP)',
 };
 
 const shippingLabels: Record<string, string> = {
