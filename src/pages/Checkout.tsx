@@ -158,6 +158,9 @@ export default function Checkout() {
     orderId: number;
     total: number;
     email: string;
+    firstName: string;
+    lastName: string;
+    phone: string;
   } | null>(null);
 
   const handleBilling = (field: string, value: string) =>
@@ -207,6 +210,9 @@ export default function Checkout() {
           orderId: data.order_id,
           total: total(),
           email: billing.email,
+          firstName: billing.first_name,
+          lastName: billing.last_name,
+          phone: billing.phone,
         });
         return;
       }
@@ -289,6 +295,9 @@ export default function Checkout() {
               orderId={brickData.orderId}
               total={brickData.total}
               email={brickData.email}
+              firstName={brickData.firstName}
+              lastName={brickData.lastName}
+              phone={brickData.phone}
               onResult={handleBrickResult}
               onError={(msg) => setError(msg)}
             />
