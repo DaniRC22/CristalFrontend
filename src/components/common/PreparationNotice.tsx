@@ -5,7 +5,7 @@ interface Props {
   className?: string;
 }
 
-const TEXT = 'Una vez realizada la compra, tenés enter 5 a 10 días hábiles de preparación del producto.';
+const TEXT = 'Una vez realizada la compra, tenés entre 5 a 10 días hábiles de preparación del producto.';
 
 export default function PreparationNotice({ variant = 'default', className = '' }: Props) {
   if (variant === 'compact') {

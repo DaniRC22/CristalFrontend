@@ -180,17 +180,17 @@ export default function AdminProductForm() {
     setOptions((prev) => prev.map((o) => (o.id === opt.id ? data : o)));
   };
 
-  // Actualiza el precio override de un valor específico de una opción.
-  // Si el precio es '' o 0, se guarda como null (= "usar precio base").
-  // Se llama solo en blur (no en cada keystroke) para no hacer N requests.
+  // Actualiza el precio del valor en `idx`. Si raw es '' o no es número
+  // positivo, se guarda como null (= "usar precio base"). Se llama solo en
+  // blur (no en cada keystroke) para no disparar N requests.
   const handleUpdatePrice = async (opt: ProductOption, idx: number, raw: string) => {
     const trimmed = raw.trim();
     const parsed = trimmed === '' ? null : parseFloat(trimmed);
     const newPriceAtIdx = trimmed === '' || !Number.isFinite(parsed!) || parsed! <= 0 ? null : parsed!;
 
     const existing = opt.prices && opt.prices.length > 0
-      ? opt.prices.slice()
-      : (Array(opt.values.length).fill(null) as (number | null)[]);
+      ? (opt.prices.slice() as (number | string | null)[])
+      : (Array(opt.values.length).fill(null) as (number | string | null)[]);
     // Por las dudas, si el length no matchea (datos viejos), lo igualamos
     while (existing.length < opt.values.length) existing.push(null);
     existing.length = opt.values.length;
@@ -200,6 +200,17 @@ export default function AdminProductForm() {
       name: opt.name,
       values: opt.values,
       prices: existing,
+      sort_order: opt.sort_order,
+    });
+    setOptions((prev) => prev.map((o) => (o.id === opt.id ? data : o)));
+  };
+
+  // Cambia el modo de pricing de una opción ('override' o 'addon').
+  const handleUpdatePriceMode = async (opt: ProductOption, mode: 'override' | 'addon') => {
+    if ((opt.price_mode ?? 'override') === mode) return;
+    const { data } = await api.put(`/api/admin/products/${id}/options/${opt.id}`, {
+      name: opt.name,
+      price_mode: mode,
       sort_order: opt.sort_order,
     });
     setOptions((prev) => prev.map((o) => (o.id === opt.id ? data : o)));
@@ -329,6 +340,7 @@ export default function AdminProductForm() {
                 onRemoveValue={(val) => handleRemoveValue(opt, val)}
                 onAddValue={(val) => handleAddValue(opt, val)}
                 onUpdatePrice={(idx, raw) => handleUpdatePrice(opt, idx, raw)}
+                onUpdateMode={(mode) => handleUpdatePriceMode(opt, mode)}
               />
             ))}
           </div>
@@ -376,14 +388,17 @@ function OptionRow({
   onRemoveValue,
   onAddValue,
   onUpdatePrice,
+  onUpdateMode,
 }: {
   opt: ProductOption;
   onDelete: () => void;
   onRemoveValue: (val: string) => void;
   onAddValue: (val: string) => void;
   onUpdatePrice: (idx: number, raw: string) => void;
+  onUpdateMode: (mode: 'override' | 'addon') => void;
 }) {
   const [adding, setAdding] = useState('');
+  const mode = opt.price_mode ?? 'override';
 
   return (
     <div className="bg-gray-50 border border-gray-200 rounded-xl p-4">
@@ -392,6 +407,32 @@ function OptionRow({
         <button onClick={onDelete} className="text-red-400 hover:text-red-600 text-xs flex items-center gap-1">
           <Trash2 size={13} /> Eliminar opción
         </button>
+      </div>
+
+      {/* Toggle de modo de precio */}
+      <div className="flex items-center gap-2 mb-3">
+        <span className="text-[10px] uppercase tracking-wider text-gray-400">Modo de precio:</span>
+        <div className="inline-flex rounded-lg border border-gray-300 overflow-hidden text-xs">
+          <button
+            type="button"
+            onClick={() => onUpdateMode('override')}
+            className={`px-2.5 py-1 transition-colors ${mode === 'override' ? 'bg-gray-900 text-white' : 'bg-white text-gray-600 hover:bg-gray-50'}`}
+            title="El precio reemplaza al base del producto (ej: medidas)"
+          >
+            Reemplaza
+          </button>
+          <button
+            type="button"
+            onClick={() => onUpdateMode('addon')}
+            className={`px-2.5 py-1 transition-colors border-l border-gray-300 ${mode === 'addon' ? 'bg-gray-900 text-white' : 'bg-white text-gray-600 hover:bg-gray-50'}`}
+            title="El precio se suma al base del producto (ej: cromado +$500)"
+          >
+            Suma
+          </button>
+        </div>
+        <span className="text-[10px] text-gray-400 ml-1">
+          {mode === 'override' ? '· los precios reemplazan al base' : '· los precios se suman al base'}
+        </span>
       </div>
 
       <div className="flex justify-between text-[10px] uppercase tracking-wider text-gray-400 px-1 mb-1">
@@ -433,7 +474,8 @@ function OptionRow({
 
 // Fila de un valor con su precio opcional. Mantiene el precio en estado local
 // y solo lo commitea (network call) al hacer blur o Enter, para no disparar
-// un PUT en cada tecla.
+// un PUT en cada tecla. El botón ⌫ a la derecha del precio lo limpia
+// instantáneamente (vuelve a usar el precio base).
 function ValueRow({
   value,
   initialPrice,
@@ -445,13 +487,26 @@ function ValueRow({
   onRemove: () => void;
   onPriceCommit: (raw: string) => void;
 }) {
-  const [price, setPrice] = useState(initialPrice === null || initialPrice === undefined ? '' : String(initialPrice));
+  const initial = initialPrice === null || initialPrice === undefined ? '' : String(initialPrice);
+  const [price, setPrice] = useState(initial);
 
-  const commit = () => {
-    const current = price.trim();
-    const original = initialPrice === null || initialPrice === undefined ? '' : String(initialPrice);
-    if (current === original) return;
+  // Si el initialPrice cambia desde afuera (ej: el backend devolvió la versión
+  // canónica después de un PUT — null si lo limpiamos), sincronizamos el
+  // input. Sin esto, el input seguiría mostrando el valor que el user dejó
+  // aunque el backend lo haya guardado como null.
+  useEffect(() => {
+    setPrice(initial);
+  }, [initial]);
+
+  const commit = (raw: string) => {
+    const current = raw.trim();
+    if (current === initial) return;
     onPriceCommit(current);
+  };
+
+  const clearPrice = () => {
+    setPrice('');
+    if (initial !== '') onPriceCommit('');
   };
 
   return (
@@ -459,7 +514,7 @@ function ValueRow({
       <span className="flex-1 px-3 py-1.5 bg-white border border-gray-200 rounded-lg text-sm text-gray-700">
         {value}
       </span>
-      <div className="relative">
+      <div className="relative w-32">
         <span className="absolute left-2 top-1/2 -translate-y-1/2 text-xs text-gray-400 pointer-events-none">$</span>
         <input
           type="number"
@@ -467,17 +522,28 @@ function ValueRow({
           step="0.01"
           value={price}
           onChange={(e) => setPrice(e.target.value)}
-          onBlur={commit}
+          onBlur={() => commit(price)}
           onKeyDown={(e) => {
             if (e.key === 'Enter') {
               e.preventDefault();
-              commit();
+              commit(price);
               (e.target as HTMLInputElement).blur();
             }
           }}
           placeholder="base"
-          className="w-28 pl-5 pr-2 py-1.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+          className="w-full pl-5 pr-7 py-1.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
         />
+        {price !== '' && (
+          <button
+            type="button"
+            onClick={clearPrice}
+            className="absolute right-1.5 top-1/2 -translate-y-1/2 text-gray-300 hover:text-gray-700 transition-colors p-0.5"
+            aria-label="Limpiar precio (usar precio base)"
+            title="Limpiar precio (usar precio base)"
+          >
+            <X size={12} />
+          </button>
+        )}
       </div>
       <button onClick={onRemove} className="text-gray-400 hover:text-red-500 p-1" aria-label="Eliminar valor">
         <X size={14} />

@@ -55,12 +55,14 @@ export default function ProductDetail() {
   const allOptionsSelected = sortedOptions.every((opt) => !!selectedOptions[opt.name]);
   const canAddToCart = allOptionsSelected;
 
-  // Precio efectivo: si el cliente seleccionó valores con override de precio,
-  // usamos el MAX de los overrides. Si no, precio base. Misma lógica que
-  // recalcula el backend en checkout (effectiveUnitPrice) — el backend es
-  // la fuente de verdad, esto es solo para mostrarle el precio correcto al
-  // cliente antes de que confirme.
+  // Precio efectivo. Combina dos modos por opción:
+  //   - 'override': el precio del valor REEMPLAZA al base (gana el MAX).
+  //   - 'addon':    el precio del valor se SUMA al base.
+  // Fórmula: max(base, max(overrides_seleccionados)) + sum(addons_seleccionados)
+  // Misma lógica que el backend en checkout.effectiveUnitPrice — backend es
+  // la fuente de verdad, esto es para mostrarle el precio correcto al cliente.
   const variantOverrides: number[] = [];
+  let variantAddons = 0;
   for (const opt of sortedOptions) {
     const sel = selectedOptions[opt.name];
     if (!sel || !opt.prices || opt.prices.length === 0) continue;
@@ -68,10 +70,13 @@ export default function ProductDetail() {
     if (idx === -1) continue;
     const raw = opt.prices[idx];
     const n = raw === null || raw === undefined ? NaN : Number(raw);
-    if (Number.isFinite(n) && n > 0) variantOverrides.push(n);
+    if (!Number.isFinite(n) || n <= 0) continue;
+    if ((opt.price_mode ?? 'override') === 'addon') variantAddons += n;
+    else variantOverrides.push(n);
   }
-  const currentPrice = variantOverrides.length > 0 ? Math.max(...variantOverrides) : product.price;
-  const hasVariantOverride = variantOverrides.length > 0;
+  const baseAfterOverride = variantOverrides.length > 0 ? Math.max(...variantOverrides) : product.price;
+  const currentPrice = baseAfterOverride + variantAddons;
+  const hasVariantOverride = variantOverrides.length > 0 || variantAddons > 0;
 
   const discountedPrice = product.transfer_discount_pct
     ? currentPrice * (1 - product.transfer_discount_pct / 100)

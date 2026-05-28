@@ -31,16 +31,21 @@ export type ProductImage = {
   is_primary: boolean;
 };
 
+export type PriceMode = 'override' | 'addon';
+
 export type ProductOption = {
   id: number;
   product_id?: number;
   name: string;            // e.g. "Color", "Talle", "Medida"
   values: string[];        // e.g. ["Blanco", "Negro", "Piel"] o ["1m", "1.5m", "2m"]
   // Precios opcionales por valor (paralelos a values). Si está vacío o el
-  // precio en una posición es null/0, ese valor usa el precio base del
-  // producto. Sirve para variantes con distinto precio (ej: percheros por
-  // medida). Si más de un valor seleccionado tiene precio, se usa el MAX.
+  // precio en una posición es null/0, ese valor usa el precio base.
   prices?: (number | string | null)[];
+  // Cómo aplican los precios:
+  //   'override' (default): el precio REEMPLAZA al base (ej: medidas).
+  //   'addon': el precio se SUMA al base (ej: color cromado +$500).
+  // Fórmula final: max(base, max(overrides)) + sum(addons)
+  price_mode?: PriceMode;
   sort_order: number;
 };
 
