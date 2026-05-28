@@ -137,6 +137,13 @@ export default function AdminOrderDetail() {
           {order.mp_payment_id && <Row label="ID pago MP" value={order.mp_payment_id} />}
         </Section>
 
+        {/* Nota del cliente (opcional, solo se muestra si la dejó) */}
+        {order.notes && (
+          <Section title="Nota del cliente">
+            <p className="text-sm text-gray-700 whitespace-pre-wrap">{order.notes}</p>
+          </Section>
+        )}
+
         {/* Productos */}
         {order.order_items && (
           <Section title="Productos">

@@ -1,4 +1,4 @@
-import { lazy, Suspense } from 'react';
+import { lazy, Suspense, useEffect } from 'react';
 import { createBrowserRouter, RouterProvider, Outlet, useLocation } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import Header from './components/layout/Header';
@@ -34,6 +34,15 @@ const AdminConfig = lazy(() => import('./pages/admin/SiteConfig'));
 
 function PublicLayout() {
   const { pathname } = useLocation();
+
+  // Resetear scroll al top cuando cambia la ruta. Sin esto, navegar de catalog
+  // (con scroll abajo) a un producto deja al usuario en la posición vieja y la
+  // nueva página parece "empezar abajo". Solo aplica a cambios de pathname,
+  // no a cambios de query/hash (eso permite, por ejemplo, deep-links a anchors).
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [pathname]);
+
   return (
     <>
       <Helmet>

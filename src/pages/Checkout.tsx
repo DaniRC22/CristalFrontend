@@ -187,6 +187,7 @@ export default function Checkout() {
         postal_code: billing.postal_code,
         payment_method: payment,
         shipping_method: shipping,
+        ...(notes.trim() && { notes: notes.trim() }),
         ...(diffShipping && shippingAddr.first_name && {
           shipping_first_name:  shippingAddr.first_name,
           shipping_last_name:   shippingAddr.last_name,

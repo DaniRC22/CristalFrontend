@@ -16,7 +16,10 @@ function makeCartKey(productId: number, options?: Record<string, string>): strin
 interface CartState {
   items: CartItem[];
   expiresAt: number | null;
-  addItem: (item: Omit<CartItem, 'quantity' | 'cart_key'>) => void;
+  // qty: cantidad a agregar (default 1). Si el item ya está en el carrito,
+  // suma qty a la cantidad existente. Útil para el quantity selector del
+  // ProductDetail (sin esto el usuario tenía que clickear N veces).
+  addItem: (item: Omit<CartItem, 'quantity' | 'cart_key'>, qty?: number) => void;
   removeItem: (cartKey: string) => void;
   updateQuantity: (cartKey: string, quantity: number) => void;
   clearCart: () => void;
@@ -32,20 +35,21 @@ export const useCartStore = create<CartState>()(
       items: [],
       expiresAt: null,
 
-      addItem: (item) =>
+      addItem: (item, qty = 1) =>
         set((state) => {
+          const addQty = Math.max(1, Math.floor(qty));
           const cart_key = makeCartKey(item.id, item.selected_options);
           const existing = state.items.find((i) => i.cart_key === cart_key);
           if (existing) {
             return {
               items: state.items.map((i) =>
-                i.cart_key === cart_key ? { ...i, quantity: i.quantity + 1 } : i
+                i.cart_key === cart_key ? { ...i, quantity: i.quantity + addQty } : i
               ),
               expiresAt: nextExpiry(),
             };
           }
           return {
-            items: [...state.items, { ...item, cart_key, quantity: 1 }],
+            items: [...state.items, { ...item, cart_key, quantity: addQty }],
             expiresAt: nextExpiry(),
           };
         }),

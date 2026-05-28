@@ -34,8 +34,13 @@ export type ProductImage = {
 export type ProductOption = {
   id: number;
   product_id?: number;
-  name: string;            // e.g. "Color", "Talle"
-  values: string[];        // e.g. ["Blanco", "Negro", "Piel"]
+  name: string;            // e.g. "Color", "Talle", "Medida"
+  values: string[];        // e.g. ["Blanco", "Negro", "Piel"] o ["1m", "1.5m", "2m"]
+  // Precios opcionales por valor (paralelos a values). Si está vacío o el
+  // precio en una posición es null/0, ese valor usa el precio base del
+  // producto. Sirve para variantes con distinto precio (ej: percheros por
+  // medida). Si más de un valor seleccionado tiene precio, se usa el MAX.
+  prices?: (number | string | null)[];
   sort_order: number;
 };
 
@@ -101,6 +106,7 @@ export type Order = {
   shipping_city?: string | null;
   shipping_province?: string | null;
   shipping_postal_code?: string | null;
+  notes?: string | null;
   created_at: string;
   order_items?: OrderItem[];
 };
