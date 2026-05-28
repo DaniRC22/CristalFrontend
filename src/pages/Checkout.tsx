@@ -6,6 +6,7 @@ import { useCartStore } from '../store/cartStore';
 import api from '../lib/api';
 import PreparationNotice from '../components/common/PreparationNotice';
 import CardPaymentBrick from '../components/checkout/CardPaymentBrick';
+import WalletPaymentBrick from '../components/checkout/WalletPaymentBrick';
 import type { PaymentMethod, ShippingMethod, CheckoutState } from '../types';
 
 function formatPrice(price: number) {
@@ -162,6 +163,11 @@ export default function Checkout() {
     lastName: string;
     phone: string;
   } | null>(null);
+  const [walletData, setWalletData] = useState<{
+    orderId: number;
+    preferenceId: string;
+    total: number;
+  } | null>(null);
 
   const handleBilling = (field: string, value: string) =>
     setBilling((prev) => ({ ...prev, [field]: value }));
@@ -218,11 +224,15 @@ export default function Checkout() {
       }
 
       if (data.needs_mp) {
-        if (!data.init_point?.startsWith('https://www.mercadopago.com')) {
-          setError('URL de pago inválida. Contactá al administrador.');
+        if (!data.preference_id) {
+          setError('No se pudo iniciar el pago con Mercado Pago. Intentá de nuevo.');
           return;
         }
-        window.location.href = data.init_point;
+        setWalletData({
+          orderId: data.order_id,
+          preferenceId: data.preference_id,
+          total: total(),
+        });
         return;
       } else {
         clearCart();
@@ -268,7 +278,7 @@ export default function Checkout() {
     return <div className="max-w-7xl mx-auto px-4 py-16 text-center text-gray-400">Tu carrito está vacío.</div>;
   }
 
-  // Pantalla de pago con tarjeta (Checkout Bricks)
+  // Pantalla de pago con tarjeta (CardPayment Brick)
   if (brickData) {
     return (
       <>
@@ -299,6 +309,42 @@ export default function Checkout() {
               lastName={brickData.lastName}
               phone={brickData.phone}
               onResult={handleBrickResult}
+              onError={(msg) => setError(msg)}
+            />
+          </div>
+        </div>
+      </>
+    );
+  }
+
+  // Pantalla de pago con Mercado Pago (Wallet Brick — botón oficial que redirige al checkout de MP)
+  if (walletData) {
+    return (
+      <>
+        <Helmet><title>Pago con Mercado Pago — Cristal Equipamiento Comercial</title></Helmet>
+        <div className="max-w-xl mx-auto px-4 py-10">
+          <button
+            type="button"
+            onClick={() => setWalletData(null)}
+            className="flex items-center gap-1 text-sm text-gray-500 hover:text-gray-800 mb-6 transition-colors"
+          >
+            <ChevronLeft size={16} /> Volver al checkout
+          </button>
+          <h1 className="text-2xl font-bold text-gray-900 mb-2">Pago con Mercado Pago</h1>
+          <p className="text-sm text-gray-500 mb-6">
+            Orden #{walletData.orderId} · Total {new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS', maximumFractionDigits: 0 }).format(walletData.total)}
+          </p>
+          {error && (
+            <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
+              <p className="text-xs text-red-700">{error}</p>
+            </div>
+          )}
+          <div className="bg-white border border-gray-200 rounded-xl p-6">
+            <p className="text-sm text-gray-600 mb-4">
+              Hacé click en el botón para continuar a Mercado Pago. Vas a poder pagar con saldo, tarjeta guardada u otros métodos disponibles en tu cuenta.
+            </p>
+            <WalletPaymentBrick
+              preferenceId={walletData.preferenceId}
               onError={(msg) => setError(msg)}
             />
           </div>
