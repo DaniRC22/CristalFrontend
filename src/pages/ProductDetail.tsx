@@ -23,6 +23,8 @@ export default function ProductDetail() {
   const [origin, setOrigin] = useState('50% 50%');
   const zoomRef = useRef<HTMLDivElement>(null);
   const touchActive = useRef(false);
+  const touchStart = useRef<{ x: number; y: number } | null>(null);
+  const didPan = useRef(false);
   const [selectedOptions, setSelectedOptions] = useState<Record<string, string>>({});
   const [quantity, setQuantity] = useState(1);
 
@@ -164,20 +166,35 @@ export default function ProductDetail() {
               }}
               onTouchStart={(e) => {
                 touchActive.current = true;
-                const r = e.currentTarget.getBoundingClientRect();
                 const t = e.touches[0];
-                const x = ((t.clientX - r.left) / r.width) * 100;
-                const y = ((t.clientY - r.top) / r.height) * 100;
-                setOrigin(`${x}% ${y}%`);
-                setIsZoomed((z) => !z);
+                touchStart.current = { x: t.clientX, y: t.clientY };
+                didPan.current = false;
               }}
               onTouchMove={(e) => {
-                if (!isZoomed) return;
-                const r = e.currentTarget.getBoundingClientRect();
+                if (!isZoomed || !touchStart.current) return;
                 const t = e.touches[0];
+                if (
+                  Math.abs(t.clientX - touchStart.current.x) > 6 ||
+                  Math.abs(t.clientY - touchStart.current.y) > 6
+                ) {
+                  didPan.current = true;
+                }
+                const r = e.currentTarget.getBoundingClientRect();
                 const x = ((t.clientX - r.left) / r.width) * 100;
                 const y = ((t.clientY - r.top) / r.height) * 100;
                 setOrigin(`${x}% ${y}%`);
+              }}
+              onTouchEnd={(e) => {
+                // Un tap (sin arrastre) alterna el zoom. Un arrastre solo panea.
+                if (!didPan.current) {
+                  const t = e.changedTouches[0];
+                  const r = e.currentTarget.getBoundingClientRect();
+                  const x = ((t.clientX - r.left) / r.width) * 100;
+                  const y = ((t.clientY - r.top) / r.height) * 100;
+                  setOrigin(`${x}% ${y}%`);
+                  setIsZoomed((z) => !z);
+                }
+                touchStart.current = null;
               }}
             >
               <AnimatePresence mode="wait">
@@ -339,12 +356,12 @@ export default function ProductDetail() {
             {/* Quantity + Botón carrito */}
             <div className="mt-auto flex flex-col sm:flex-row gap-3">
               {/* Quantity selector */}
-              <div className="flex items-center border border-gray-300 rounded-xl overflow-hidden shrink-0 self-stretch">
+              <div className="flex items-center border border-gray-300 rounded-xl overflow-hidden shrink-0 self-start sm:self-stretch">
                 <button
                   type="button"
                   onClick={() => setQuantity((q) => Math.max(1, q - 1))}
                   disabled={clampedQuantity <= 1}
-                  className="px-4 h-full text-gray-700 hover:bg-gray-50 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                  className="px-4 py-3 sm:py-0 sm:h-full text-gray-700 hover:bg-gray-50 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
                   aria-label="Disminuir cantidad"
                 >
                   <Minus size={16} />
@@ -365,7 +382,7 @@ export default function ProductDetail() {
                   type="button"
                   onClick={() => setQuantity((q) => Math.min(maxQty, q + 1))}
                   disabled={clampedQuantity >= maxQty}
-                  className="px-4 h-full text-gray-700 hover:bg-gray-50 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                  className="px-4 py-3 sm:py-0 sm:h-full text-gray-700 hover:bg-gray-50 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
                   aria-label="Aumentar cantidad"
                 >
                   <Plus size={16} />
