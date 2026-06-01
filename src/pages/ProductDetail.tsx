@@ -22,6 +22,7 @@ export default function ProductDetail() {
   const [isZoomed, setIsZoomed] = useState(false);
   const [origin, setOrigin] = useState('50% 50%');
   const zoomRef = useRef<HTMLDivElement>(null);
+  const touchActive = useRef(false);
   const [selectedOptions, setSelectedOptions] = useState<Record<string, string>>({});
   const [quantity, setQuantity] = useState(1);
 
@@ -138,8 +139,12 @@ export default function ProductDetail() {
             <div
               ref={zoomRef}
               className="aspect-square rounded-2xl overflow-hidden bg-gray-50 mb-3 border border-gray-100"
-              style={{ cursor: isZoomed ? 'zoom-out' : 'zoom-in' }}
+              style={{
+                cursor: isZoomed ? 'zoom-out' : 'zoom-in',
+                touchAction: isZoomed ? 'none' : 'auto',
+              }}
               onMouseEnter={(e) => {
+                if (touchActive.current) return;
                 const r = e.currentTarget.getBoundingClientRect();
                 const x = ((e.clientX - r.left) / r.width) * 100;
                 const y = ((e.clientY - r.top) / r.height) * 100;
@@ -147,12 +152,33 @@ export default function ProductDetail() {
                 setIsZoomed(true);
               }}
               onMouseMove={(e) => {
+                if (touchActive.current) return;
                 const r = e.currentTarget.getBoundingClientRect();
                 const x = ((e.clientX - r.left) / r.width) * 100;
                 const y = ((e.clientY - r.top) / r.height) * 100;
                 setOrigin(`${x}% ${y}%`);
               }}
-              onMouseLeave={() => setIsZoomed(false)}
+              onMouseLeave={() => {
+                if (touchActive.current) return;
+                setIsZoomed(false);
+              }}
+              onTouchStart={(e) => {
+                touchActive.current = true;
+                const r = e.currentTarget.getBoundingClientRect();
+                const t = e.touches[0];
+                const x = ((t.clientX - r.left) / r.width) * 100;
+                const y = ((t.clientY - r.top) / r.height) * 100;
+                setOrigin(`${x}% ${y}%`);
+                setIsZoomed((z) => !z);
+              }}
+              onTouchMove={(e) => {
+                if (!isZoomed) return;
+                const r = e.currentTarget.getBoundingClientRect();
+                const t = e.touches[0];
+                const x = ((t.clientX - r.left) / r.width) * 100;
+                const y = ((t.clientY - r.top) / r.height) * 100;
+                setOrigin(`${x}% ${y}%`);
+              }}
             >
               <AnimatePresence mode="wait">
                 <motion.img
