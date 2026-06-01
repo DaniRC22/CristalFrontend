@@ -1,7 +1,7 @@
 import { useState, useRef } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
-import { ShoppingCart, ChevronLeft } from 'lucide-react';
+import { ShoppingCart, ChevronLeft, Minus, Plus } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useProduct } from '../hooks/useProducts';
 import { useCartStore } from '../store/cartStore';
@@ -23,6 +23,7 @@ export default function ProductDetail() {
   const [origin, setOrigin] = useState('50% 50%');
   const zoomRef = useRef<HTMLDivElement>(null);
   const [selectedOptions, setSelectedOptions] = useState<Record<string, string>>({});
+  const [quantity, setQuantity] = useState(1);
 
   if (isLoading) {
     return (
@@ -49,25 +50,47 @@ export default function ProductDetail() {
 
   const images = product.product_images?.sort((a, b) => a.order - b.order) ?? [];
   const currentImage = images[selectedImg];
-  const discountedPrice = product.transfer_discount_pct
-    ? product.price * (1 - product.transfer_discount_pct / 100)
-    : null;
 
   const sortedOptions = (product.product_options ?? []).slice().sort((a, b) => a.sort_order - b.sort_order);
   const allOptionsSelected = sortedOptions.every((opt) => !!selectedOptions[opt.name]);
   const canAddToCart = allOptionsSelected;
+
+  // Precio efectivo: si el cliente seleccionó valores con override de precio,
+  // usamos el MAX de los overrides. Si no, precio base. Misma lógica que
+  // recalcula el backend en checkout (effectiveUnitPrice) — el backend es
+  // la fuente de verdad, esto es solo para mostrarle el precio correcto al
+  // cliente antes de que confirme.
+  const variantOverrides: number[] = [];
+  for (const opt of sortedOptions) {
+    const sel = selectedOptions[opt.name];
+    if (!sel || !opt.prices || opt.prices.length === 0) continue;
+    const idx = opt.values.indexOf(sel);
+    if (idx === -1) continue;
+    const raw = opt.prices[idx];
+    const n = raw === null || raw === undefined ? NaN : Number(raw);
+    if (Number.isFinite(n) && n > 0) variantOverrides.push(n);
+  }
+  const currentPrice = variantOverrides.length > 0 ? Math.max(...variantOverrides) : product.price;
+  const hasVariantOverride = variantOverrides.length > 0;
+
+  const discountedPrice = product.transfer_discount_pct
+    ? currentPrice * (1 - product.transfer_discount_pct / 100)
+    : null;
+
+  const maxQty = Math.max(1, product.stock);
+  const clampedQuantity = Math.min(Math.max(1, quantity), maxQty);
 
   const handleAddToCart = () => {
     if (!canAddToCart) return;
     addItem({
       id: product.id,
       name: product.name,
-      price: product.price,
+      price: currentPrice,
       stock: product.stock,
       image_url: images[0]?.thumb_url ?? images[0]?.url,
       slug: product.slug,
       selected_options: Object.keys(selectedOptions).length > 0 ? selectedOptions : undefined,
-    });
+    }, clampedQuantity);
     setAdded(true);
     setTimeout(() => setAdded(false), 2000);
   };
@@ -195,7 +218,7 @@ export default function ProductDetail() {
             <div className="mb-6">
               {discountedPrice ? (
                 <div className="space-y-1">
-                  <p className="text-sm text-gray-400 line-through">{formatPrice(product.price)}</p>
+                  <p className="text-sm text-gray-400 line-through">{formatPrice(currentPrice)}</p>
                   <p
                     className="text-4xl text-gray-900"
                     style={{ fontFamily: 'Cormorant Garamond, Georgia, serif', fontWeight: 400 }}
@@ -208,14 +231,26 @@ export default function ProductDetail() {
                       {product.transfer_discount_pct}% off
                     </span>
                   </p>
+                  {hasVariantOverride && (
+                    <p className="text-[10px] uppercase tracking-wider text-gray-400 mt-1">
+                      Precio según opción seleccionada
+                    </p>
+                  )}
                 </div>
               ) : (
-                <p
-                  className="text-4xl text-gray-900"
-                  style={{ fontFamily: 'Cormorant Garamond, Georgia, serif', fontWeight: 400 }}
-                >
-                  {formatPrice(product.price)}
-                </p>
+                <div className="space-y-1">
+                  <p
+                    className="text-4xl text-gray-900"
+                    style={{ fontFamily: 'Cormorant Garamond, Georgia, serif', fontWeight: 400 }}
+                  >
+                    {formatPrice(currentPrice)}
+                  </p>
+                  {hasVariantOverride && (
+                    <p className="text-[10px] uppercase tracking-wider text-gray-400">
+                      Precio según opción seleccionada
+                    </p>
+                  )}
+                </div>
               )}
             </div>
 
@@ -270,20 +305,57 @@ export default function ProductDetail() {
               </div>
             )}
 
-            {/* Botón carrito */}
-            <button
-              onClick={handleAddToCart}
-              disabled={sortedOptions.length > 0 && !allOptionsSelected}
-              className="mt-auto flex items-center justify-center gap-2.5 text-white py-4 px-8 text-xs tracking-widest uppercase font-semibold rounded-xl disabled:opacity-40 disabled:cursor-not-allowed transition-all duration-300 hover:opacity-90"
-              style={{ backgroundColor: added ? '#d4a843' : '#1a1a1a' }}
-            >
-              <ShoppingCart size={16} />
-              {added
-                ? '¡Agregado al carrito!'
-                : sortedOptions.length > 0 && !allOptionsSelected
-                ? `Elegí ${missingOptions.map((o) => o.name).join(', ')}`
-                : 'Agregar al carrito'}
-            </button>
+            {/* Quantity + Botón carrito */}
+            <div className="mt-auto flex flex-col sm:flex-row gap-3">
+              {/* Quantity selector */}
+              <div className="flex items-center border border-gray-300 rounded-xl overflow-hidden shrink-0 self-stretch">
+                <button
+                  type="button"
+                  onClick={() => setQuantity((q) => Math.max(1, q - 1))}
+                  disabled={clampedQuantity <= 1}
+                  className="px-4 h-full text-gray-700 hover:bg-gray-50 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                  aria-label="Disminuir cantidad"
+                >
+                  <Minus size={16} />
+                </button>
+                <input
+                  type="number"
+                  min={1}
+                  max={maxQty}
+                  value={clampedQuantity}
+                  onChange={(e) => {
+                    const n = parseInt(e.target.value, 10);
+                    setQuantity(Number.isFinite(n) && n > 0 ? n : 1);
+                  }}
+                  className="w-12 text-center text-sm font-semibold text-gray-900 focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                  aria-label="Cantidad"
+                />
+                <button
+                  type="button"
+                  onClick={() => setQuantity((q) => Math.min(maxQty, q + 1))}
+                  disabled={clampedQuantity >= maxQty}
+                  className="px-4 h-full text-gray-700 hover:bg-gray-50 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                  aria-label="Aumentar cantidad"
+                >
+                  <Plus size={16} />
+                </button>
+              </div>
+
+              {/* Botón carrito */}
+              <button
+                onClick={handleAddToCart}
+                disabled={sortedOptions.length > 0 && !allOptionsSelected}
+                className="flex-1 flex items-center justify-center gap-2.5 text-white py-4 px-8 text-xs tracking-widest uppercase font-semibold rounded-xl disabled:opacity-40 disabled:cursor-not-allowed transition-all duration-300 hover:opacity-90"
+                style={{ backgroundColor: added ? '#d4a843' : '#1a1a1a' }}
+              >
+                <ShoppingCart size={16} />
+                {added
+                  ? '¡Agregado al carrito!'
+                  : sortedOptions.length > 0 && !allOptionsSelected
+                  ? `Elegí ${missingOptions.map((o) => o.name).join(', ')}`
+                  : 'Agregar al carrito'}
+              </button>
+            </div>
 
             <PreparationNotice className="mt-4" />
 

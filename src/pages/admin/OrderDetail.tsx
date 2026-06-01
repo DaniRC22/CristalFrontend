@@ -8,8 +8,7 @@ import type { Order } from '../../types';
 const paymentLabels: Record<string, string> = {
   transfer: 'Transferencia bancaria',
   presencial: 'Pago en persona',
-  mercadopago: 'Medio de pago a elección (MP)',
-  mercado_credito: 'Mercado Crédito',
+  mercadopago: 'Mercado Pago (MP)',
 };
 
 const shippingLabels: Record<string, string> = {
@@ -138,6 +137,13 @@ export default function AdminOrderDetail() {
           {order.mp_payment_id && <Row label="ID pago MP" value={order.mp_payment_id} />}
         </Section>
 
+        {/* Nota del cliente (opcional, solo se muestra si la dejó) */}
+        {order.notes && (
+          <Section title="Nota del cliente">
+            <p className="text-sm text-gray-700 whitespace-pre-wrap">{order.notes}</p>
+          </Section>
+        )}
+
         {/* Productos */}
         {order.order_items && (
           <Section title="Productos">
@@ -172,7 +178,7 @@ export default function AdminOrderDetail() {
                 {s.label}
               </button>
             ))}
-            {order.status === 'pending' && ['mercadopago', 'mercado_credito'].includes(order.payment_method ?? '') && (
+            {order.status === 'pending' && order.payment_method === 'mercadopago' && (
               <button
                 onClick={() => { setVerifyMsg(null); verifyMutation.mutate(); }}
                 disabled={verifyMutation.isPending}

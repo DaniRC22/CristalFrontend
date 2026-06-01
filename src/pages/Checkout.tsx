@@ -1,10 +1,11 @@
 import { useState } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { useNavigate } from 'react-router-dom';
-import { MapPin, Truck, CreditCard, ArrowRight, Banknote, Users, Smartphone } from 'lucide-react';
+import { MapPin, Truck, CreditCard, ArrowRight, Banknote, Users, ChevronLeft } from 'lucide-react';
 import { useCartStore } from '../store/cartStore';
 import api from '../lib/api';
 import PreparationNotice from '../components/common/PreparationNotice';
+import CardPaymentBrick from '../components/checkout/CardPaymentBrick';
 import type { PaymentMethod, ShippingMethod, CheckoutState } from '../types';
 
 function formatPrice(price: number) {
@@ -27,8 +28,8 @@ const shippingOptions: { value: ShippingMethod; label: string; desc: string; ico
 const paymentOptions: { value: PaymentMethod; label: string; desc: string; icon: typeof CreditCard }[] = [
   { value: 'transfer', label: 'Transferencia bancaria', desc: 'Te enviamos los datos al confirmar', icon: Banknote },
   { value: 'presencial', label: 'Pago en persona', desc: 'Efectivo o cualquier medio al retirar', icon: Users },
-  { value: 'mercadopago', label: 'Medio de pago a elección', desc: 'Tarjeta, débito, billetera virtual y más', icon: CreditCard },
-  { value: 'mercado_credito', label: 'Mercado Crédito', desc: 'Pagá en cuotas sin tarjeta', icon: Smartphone },
+  { value: 'mercadopago', label: 'Mercado Pago', desc: 'Billetera MP, Mercado Crédito y más', icon: CreditCard },
+  { value: 'tarjeta', label: 'Tarjeta de crédito / débito', desc: 'Pagá directo con tu tarjeta, sin salir del sitio', icon: CreditCard },
 ];
 
 const inputCls = 'w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-gray-900 transition-shadow';
@@ -153,6 +154,14 @@ export default function Checkout() {
   const [payment, setPayment] = useState<PaymentMethod>('transfer');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [brickData, setBrickData] = useState<{
+    orderId: number;
+    total: number;
+    email: string;
+    firstName: string;
+    lastName: string;
+    phone: string;
+  } | null>(null);
 
   const handleBilling = (field: string, value: string) =>
     setBilling((prev) => ({ ...prev, [field]: value }));
@@ -178,6 +187,7 @@ export default function Checkout() {
         postal_code: billing.postal_code,
         payment_method: payment,
         shipping_method: shipping,
+        ...(notes.trim() && { notes: notes.trim() }),
         ...(diffShipping && shippingAddr.first_name && {
           shipping_first_name:  shippingAddr.first_name,
           shipping_last_name:   shippingAddr.last_name,
@@ -196,9 +206,21 @@ export default function Checkout() {
         shipping_method: shipping,
       }));
 
+      if (data.needs_brick) {
+        setBrickData({
+          orderId: data.order_id,
+          total: total(),
+          email: billing.email,
+          firstName: billing.first_name,
+          lastName: billing.last_name,
+          phone: billing.phone,
+        });
+        return;
+      }
+
       if (data.needs_mp) {
         if (!data.init_point?.startsWith('https://www.mercadopago.com')) {
-          setError('URL de pago inválida. Contactá al administrador.');
+          setError('No se pudo iniciar el pago con Mercado Pago. Intentá de nuevo.');
           return;
         }
         window.location.href = data.init_point;
@@ -220,8 +242,70 @@ export default function Checkout() {
     }
   };
 
+  const handleBrickResult = (
+    status: string,
+    redirectUrls: { approved: string; rejected: string; pending: string },
+  ) => {
+    if (!brickData) return;
+    const { orderId } = brickData;
+    if (status === 'approved' || status === 'authorized') {
+      clearCart();
+      navigate(`/orden/${orderId}?status=success`);
+    } else if (status === 'in_process' || status === 'pending') {
+      clearCart();
+      navigate(`/orden/${orderId}?status=pending`);
+    } else {
+      // rejected — usar la URL del backend que incluye el token de cancelación
+      try {
+        const url = new URL(redirectUrls.rejected);
+        navigate(url.pathname + url.search);
+      } catch {
+        navigate(`/orden/${orderId}?status=failure`);
+      }
+    }
+  };
+
   if (!items.length) {
     return <div className="max-w-7xl mx-auto px-4 py-16 text-center text-gray-400">Tu carrito está vacío.</div>;
+  }
+
+  // Pantalla de pago con tarjeta (CardPayment Brick)
+  if (brickData) {
+    return (
+      <>
+        <Helmet><title>Pago con tarjeta — Cristal Equipamiento Comercial</title></Helmet>
+        <div className="max-w-xl mx-auto px-4 py-10">
+          <button
+            type="button"
+            onClick={() => setBrickData(null)}
+            className="flex items-center gap-1 text-sm text-gray-500 hover:text-gray-800 mb-6 transition-colors"
+          >
+            <ChevronLeft size={16} /> Volver al checkout
+          </button>
+          <h1 className="text-2xl font-bold text-gray-900 mb-2">Pago con tarjeta</h1>
+          <p className="text-sm text-gray-500 mb-6">
+            Orden #{brickData.orderId} · Total {new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS', maximumFractionDigits: 0 }).format(brickData.total)}
+          </p>
+          {error && (
+            <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
+              <p className="text-xs text-red-700">{error}</p>
+            </div>
+          )}
+          <div className="bg-white border border-gray-200 rounded-xl p-6">
+            <CardPaymentBrick
+              orderId={brickData.orderId}
+              total={brickData.total}
+              email={brickData.email}
+              firstName={brickData.firstName}
+              lastName={brickData.lastName}
+              phone={brickData.phone}
+              onResult={handleBrickResult}
+              onError={(msg) => setError(msg)}
+            />
+          </div>
+        </div>
+      </>
+    );
   }
 
   return (
