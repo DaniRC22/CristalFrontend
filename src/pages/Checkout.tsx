@@ -162,6 +162,16 @@ export default function Checkout() {
     lastName: string;
     phone: string;
   } | null>(null);
+  const subtotal = total();
+  const transferDiscount =
+    payment === 'transfer'
+      ? items.reduce(
+          (sum, i) =>
+            sum + (i.transfer_discount_pct ? i.price * i.quantity * (i.transfer_discount_pct / 100) : 0),
+          0,
+        )
+      : 0;
+  const grandTotal = subtotal - transferDiscount;
 
   const handleBilling = (field: string, value: string) =>
     setBilling((prev) => ({ ...prev, [field]: value }));
@@ -426,13 +436,25 @@ export default function Checkout() {
                 </div>
 
                 <div className="border-t border-gray-200 mt-2 pt-3 space-y-2">
+                  {transferDiscount > 0 && (
+                    <div className="flex justify-between text-sm text-gray-600">
+                      <span>Subtotal</span>
+                      <span>{formatPrice(subtotal)}</span>
+                    </div>
+                  )}
+                  {transferDiscount > 0 && (
+                    <div className="flex justify-between text-sm" style={{ color: '#b8962e' }}>
+                      <span>Descuento por transferencia</span>
+                      <span>-{formatPrice(transferDiscount)}</span>
+                    </div>
+                  )}
                   <div className="flex justify-between text-sm text-gray-600">
                     <span>Envío</span>
                     <span>{shipping === 'retiro' ? 'Gratis' : 'A coordinar'}</span>
                   </div>
                   <div className="flex justify-between font-bold text-gray-900">
                     <span>Total</span>
-                    <span>{formatPrice(total())}</span>
+                    <span>{formatPrice(grandTotal)}</span>
                   </div>
                 </div>
 

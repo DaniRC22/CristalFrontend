@@ -95,6 +95,7 @@ export default function ProductDetail() {
       name: product.name,
       price: currentPrice,
       stock: product.stock,
+      transfer_discount_pct: product.transfer_discount_pct,
       image_url: images[0]?.thumb_url ?? images[0]?.url,
       slug: product.slug,
       selected_options: Object.keys(selectedOptions).length > 0 ? selectedOptions : undefined,
