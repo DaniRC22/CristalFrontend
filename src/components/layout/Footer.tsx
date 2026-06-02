@@ -114,6 +114,17 @@ export default function Footer() {
           <p className="text-[11px] tracking-widest uppercase text-gray-600">
             © {new Date().getFullYear()} Cristal Equipamiento Comercial
           </p>
+          <p className="text-[11px] text-gray-700 tracking-wide">
+            Desarrollado por{' '}
+            <a
+              href="https://www.linkedin.com/in/estebandanielrivero/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-gray-500 hover:text-white transition-colors underline-offset-2 hover:underline"
+            >
+              Daniel Rivero
+            </a>
+          </p>
           <p className="text-[11px] text-gray-700 tracking-wide">Todos los derechos reservados</p>
         </div>
       </div>
