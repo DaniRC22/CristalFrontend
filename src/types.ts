@@ -144,7 +144,7 @@ export type PaginatedResponse<T> = {
 };
 
 export type OrderSummary = {
-  items: Array<{ name: string; price: number; quantity: number; selected_options?: Record<string, string> }>;
+  items: Array<{ id?: number; name: string; price: number; quantity: number; selected_options?: Record<string, string> }>;
   total: number;
   payment_method: PaymentMethod;
   shipping_method: ShippingMethod;

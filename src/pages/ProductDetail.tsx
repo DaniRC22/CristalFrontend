@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import { ShoppingCart, ChevronLeft, Minus, Plus } from 'lucide-react';
@@ -6,6 +6,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useProduct } from '../hooks/useProducts';
 import { useCartStore } from '../store/cartStore';
 import PreparationNotice from '../components/common/PreparationNotice';
+import InstallmentsNotice from '../components/common/InstallmentsNotice';
+import { trackViewContent, trackAddToCart } from '../lib/analytics';
 
 function formatPrice(price: number) {
   return new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS', maximumFractionDigits: 0 }).format(price);
@@ -27,6 +29,13 @@ export default function ProductDetail() {
   const didPan = useRef(false);
   const [selectedOptions, setSelectedOptions] = useState<Record<string, string>>({});
   const [quantity, setQuantity] = useState(1);
+
+  // ViewContent: clave para que el Pixel arme audiencias de retargeting.
+  useEffect(() => {
+    if (product) {
+      trackViewContent({ id: product.id, name: product.name, price: product.price });
+    }
+  }, [product?.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
   if (isLoading) {
     return (
@@ -100,6 +109,7 @@ export default function ProductDetail() {
       slug: product.slug,
       selected_options: Object.keys(selectedOptions).length > 0 ? selectedOptions : undefined,
     }, clampedQuantity);
+    trackAddToCart({ id: product.id, name: product.name, price: currentPrice, quantity: clampedQuantity });
     setAdded(true);
     setTimeout(() => setAdded(false), 2000);
   };
@@ -115,7 +125,7 @@ export default function ProductDetail() {
           '@context': 'https://schema.org',
           '@type': 'Product',
           name: product.name,
-          description: product.description,
+          description: product.description ?? `Comprá ${product.name} en Cristal Equipamiento Comercial.`,
           image: images.map((i) => i.url),
           offers: { '@type': 'Offer', price: product.price, priceCurrency: 'ARS', availability: 'https://schema.org/InStock' },
         })}</script>
@@ -301,6 +311,8 @@ export default function ProductDetail() {
                   )}
                 </div>
               )}
+
+              <InstallmentsNotice className="mt-3" />
             </div>
 
             {/* Separador dorado */}
