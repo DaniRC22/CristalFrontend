@@ -119,13 +119,13 @@ export default function ProductDetail() {
   return (
     <>
       <Helmet>
-        <title>{product.name} — Cristal Equipamiento Comercial</title>
-        <meta name="description" content={product.description ?? `Comprá ${product.name} en Cristal Equipamiento Comercial.`} />
+        <title>{`${product.name} — Cristal Equipamiento Comercial`}</title>
+        <meta name="description" content={product.description?.trim() || `Comprá ${product.name} en Cristal Equipamiento Comercial.`} />
         <script type="application/ld+json">{JSON.stringify({
           '@context': 'https://schema.org',
           '@type': 'Product',
           name: product.name,
-          description: product.description ?? `Comprá ${product.name} en Cristal Equipamiento Comercial.`,
+          description: product.description?.trim() || `Comprá ${product.name} en Cristal Equipamiento Comercial.`,
           image: images.map((i) => i.url),
           offers: { '@type': 'Offer', price: product.price, priceCurrency: 'ARS', availability: 'https://schema.org/InStock' },
         })}</script>

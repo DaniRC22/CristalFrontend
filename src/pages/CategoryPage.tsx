@@ -28,7 +28,7 @@ export default function CategoryPage() {
   return (
     <>
       <Helmet>
-        <title>{category?.name ?? slug} — Cristal Equipamiento Comercial</title>
+        <title>{`${category?.name ?? slug} — Cristal Equipamiento Comercial`}</title>
         <meta name="description" content={`Productos de la categoría ${category?.name ?? slug} en Cristal Equipamiento Comercial.`} />
       </Helmet>
 
