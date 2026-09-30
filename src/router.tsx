@@ -4,6 +4,7 @@ import { Helmet } from 'react-helmet-async';
 import Header from './components/layout/Header';
 import Footer from './components/layout/Footer';
 import WhatsAppButton from './components/layout/WhatsAppButton';
+import { trackPageView } from './lib/analytics';
 import ProtectedRoute from './components/admin/ProtectedRoute';
 import AdminLayout from './components/admin/AdminLayout';
 
@@ -41,6 +42,7 @@ function PublicLayout() {
   // no a cambios de query/hash (eso permite, por ejemplo, deep-links a anchors).
   useEffect(() => {
     window.scrollTo(0, 0);
+    trackPageView(pathname);
   }, [pathname]);
 
   return (

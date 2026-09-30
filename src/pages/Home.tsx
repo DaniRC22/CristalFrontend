@@ -7,6 +7,7 @@ import { useCategories } from '../hooks/useCategories';
 import BannerSlider from '../components/home/BannerSlider';
 import CategoryGrid from '../components/home/CategoryGrid';
 import FeaturedProducts from '../components/home/FeaturedProducts';
+import InstallmentsNotice from '../components/common/InstallmentsNotice';
 
 const benefits = [
   { icon: Truck, title: 'Envíos a todo el país', desc: 'Despachamos a cualquier provincia' },
@@ -39,6 +40,8 @@ export default function Home() {
       </Helmet>
 
       <BannerSlider banners={banners} />
+
+      <InstallmentsNotice variant="banner" />
 
       {/* Beneficios */}
       <section ref={benefitsRef} className="border-y border-gray-100 bg-white overflow-hidden">

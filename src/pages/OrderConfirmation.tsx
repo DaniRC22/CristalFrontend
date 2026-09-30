@@ -4,6 +4,7 @@ import { CheckCircle, XCircle, Clock, Banknote, Users } from 'lucide-react';
 import { useCartStore } from '../store/cartStore';
 import { useSiteConfig } from '../hooks/useBanners';
 import api from '../lib/api';
+import { trackPurchase, trackWhatsAppClick } from '../lib/analytics';
 import PreparationNotice from '../components/common/PreparationNotice';
 import type { CheckoutState, OrderSummary } from '../types';
 
@@ -65,6 +66,7 @@ const WaIcon = () => (
 function WaButton({ href, label }: { href: string; label: string }) {
   return (
     <a href={href} target="_blank" rel="noopener noreferrer"
+      onClick={() => trackWhatsAppClick('confirmacion_orden')}
       className="flex items-center justify-center gap-2 w-full bg-green-500 hover:bg-green-600 text-white px-6 py-3 rounded-xl font-semibold text-sm transition-colors">
       <WaIcon />
       {label}
@@ -104,6 +106,25 @@ export default function OrderConfirmation() {
     const stored = sessionStorage.getItem(`order_${id}`);
     return stored ? (JSON.parse(stored) as OrderSummary) : null;
   }, [id]);
+
+  // Purchase: la conversión que GA4 y el Pixel necesitan para medir ROI y
+  // optimizar campañas. Se dispara en cualquier resultado donde la orden quedó
+  // creada (transferencia, presencial, pago MP aprobado o en proceso), nunca en
+  // rechazo. Deduplicado por orden para no inflar conversiones ante recargas.
+  useEffect(() => {
+    if (!id || !summary) return;
+    const placed =
+      method === 'transfer' || method === 'presencial' || status === 'success' || status === 'pending';
+    if (!placed) return;
+    const flag = `purchase_tracked_${id}`;
+    if (sessionStorage.getItem(flag)) return;
+    sessionStorage.setItem(flag, '1');
+    trackPurchase(
+      id,
+      summary.total,
+      summary.items.map((i) => ({ id: i.id ?? i.name, name: i.name, price: i.price, quantity: i.quantity })),
+    );
+  }, [id, summary, status, method]);
 
   // Pagos no-MP (transferencia o presencial)
   if (method === 'transfer' || method === 'presencial') {

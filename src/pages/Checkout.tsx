@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { useNavigate } from 'react-router-dom';
 import { MapPin, Truck, CreditCard, ArrowRight, Banknote, Users, ChevronLeft } from 'lucide-react';
@@ -6,6 +6,7 @@ import { useCartStore } from '../store/cartStore';
 import api from '../lib/api';
 import PreparationNotice from '../components/common/PreparationNotice';
 import CardPaymentBrick from '../components/checkout/CardPaymentBrick';
+import { trackInitiateCheckout } from '../lib/analytics';
 import type { PaymentMethod, ShippingMethod, CheckoutState } from '../types';
 
 function formatPrice(price: number) {
@@ -173,6 +174,17 @@ export default function Checkout() {
       : 0;
   const grandTotal = subtotal - transferDiscount;
 
+  // InitiateCheckout: se dispara una vez al llegar al checkout con items.
+  useEffect(() => {
+    if (items.length) {
+      trackInitiateCheckout(
+        items.map((i) => ({ id: i.id, name: i.name, price: i.price, quantity: i.quantity })),
+        subtotal,
+      );
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const handleBilling = (field: string, value: string) =>
     setBilling((prev) => ({ ...prev, [field]: value }));
 
@@ -210,7 +222,7 @@ export default function Checkout() {
       });
 
       sessionStorage.setItem(`order_${data.order_id}`, JSON.stringify({
-        items: items.map((i) => ({ name: i.name, price: i.price, quantity: i.quantity, selected_options: i.selected_options })),
+        items: items.map((i) => ({ id: i.id, name: i.name, price: i.price, quantity: i.quantity, selected_options: i.selected_options })),
         total: total(),
         payment_method: payment,
         shipping_method: shipping,

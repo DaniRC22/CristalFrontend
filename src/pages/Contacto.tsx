@@ -1,6 +1,7 @@
 import { Helmet } from 'react-helmet-async';
 import { useSiteConfig } from '../hooks/useBanners';
 import { Phone, Mail } from 'lucide-react';
+import { trackWhatsAppClick } from '../lib/analytics';
 
 function InstagramIcon({ size = 18 }: { size?: number }) {
   return (
@@ -36,6 +37,7 @@ export default function Contacto() {
         <div className="space-y-4">
           {waNumber && (
             <a href={`https://wa.me/${waNumber}`} target="_blank" rel="noopener noreferrer"
+              onClick={() => trackWhatsAppClick('pagina_contacto')}
               className="flex items-center gap-4 p-4 bg-green-50 rounded-xl hover:bg-green-100 transition-colors">
               <div className="w-10 h-10 bg-green-500 text-white rounded-full flex items-center justify-center shrink-0">
                 <svg viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5">

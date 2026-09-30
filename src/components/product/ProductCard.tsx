@@ -3,6 +3,7 @@ import { ShoppingCart } from 'lucide-react';
 import { motion } from 'framer-motion';
 import type { Product } from '../../types';
 import { useCartStore } from '../../store/cartStore';
+import InstallmentsNotice from '../common/InstallmentsNotice';
 
 interface Props {
   product: Product;
@@ -113,6 +114,8 @@ export default function ProductCard({ product }: Props) {
               {formatPrice(product.price)}
             </p>
           )}
+
+          <InstallmentsNotice price={product.price} variant="overlay" />
 
           <motion.div
             variants={footerHover}
