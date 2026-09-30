@@ -1,11 +1,5 @@
 // Capa única de medición: Google Analytics 4 (GA4) + Meta Pixel.
 //
-// Los scripts SOLO se cargan si están configurados los IDs en el entorno:
-//   VITE_GA4_ID         (ej. "G-XXXXXXXXXX")
-//   VITE_META_PIXEL_ID  (ej. "123456789012345")
-// Si una variable está vacía, ese proveedor simplemente no se inicializa, así
-// que en desarrollo no se ensucian los datos ni se cargan scripts de terceros.
-//
 // El resto de la app no habla con gtag/fbq directo: usa las funciones de este
 // módulo (trackViewContent, trackAddToCart, etc.). Si mañana cambiás de
 // herramienta, se toca solo este archivo.
